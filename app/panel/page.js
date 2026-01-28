@@ -1,21 +1,46 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, Search, Download } from 'lucide-react';
+import { Plus, Search, Download, Loader2 } from 'lucide-react';
 import BankDetails from '@/components/BankDetails';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function UserDashboard() {
+    const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
+    const [orders, setOrders] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Mock Data (Empty for fresh start)
-    const allOrders = [];
+    useEffect(() => {
+        const fetchOrders = async () => {
+            if (!user) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                setOrders(data || []);
+            } catch (err) {
+                console.error('Error fetching orders:', err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchOrders();
+    }, [user]);
 
     // Filter logic for search
-    const filteredOrders = allOrders.filter(order =>
-        order.couple.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.date.includes(searchTerm) ||
-        order.id.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredOrders = orders.filter(order =>
+        (order.couple_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.shoot_date || '').includes(searchTerm) ||
+        (order.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.studio_name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -53,26 +78,38 @@ export default function UserDashboard() {
                     <thead>
                         <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
                             <th style={{ padding: '16px' }}>Sipariş No</th>
-                            <th style={{ padding: '16px' }}>Çift İsimleri</th>
+                            <th style={{ padding: '16px' }}>Stüdyo / Çift</th>
                             <th style={{ padding: '16px' }}>Paket</th>
                             <th style={{ padding: '16px' }}>Çekim Tarihi</th>
                             <th style={{ padding: '16px' }}>Durum</th>
-                            <th style={{ padding: '16px' }}>Teslimat Dosyası</th>
+                            <th style={{ padding: '16px' }}>Teslimat</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredOrders.length > 0 ? (
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="6" style={{ padding: '40px', textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
+                                        <Loader2 className="animate-spin" size={20} />
+                                        Yükleniyor...
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : filteredOrders.length > 0 ? (
                             filteredOrders.map((order) => (
                                 <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                    <td style={{ padding: '16px', fontWeight: 'bold' }}>{order.id}</td>
-                                    <td style={{ padding: '16px' }}>{order.couple}</td>
-                                    <td style={{ padding: '16px' }}>{order.package}</td>
-                                    <td style={{ padding: '16px', color: 'var(--text-main)', fontWeight: '500' }}>{order.date}</td>
+                                    <td style={{ padding: '16px', fontWeight: 'bold', color: 'var(--primary)' }}>{order.id}</td>
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{ fontWeight: '500' }}>{order.studio_name}</div>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{order.couple_name}</div>
+                                    </td>
+                                    <td style={{ padding: '16px', fontSize: '0.9rem' }}>{order.package}</td>
+                                    <td style={{ padding: '16px', color: 'var(--text-main)' }}>{new Date(order.shoot_date).toLocaleDateString('tr-TR')}</td>
                                     <td style={{ padding: '16px' }}><StatusBadge status={order.status} /></td>
                                     <td style={{ padding: '16px' }}>
-                                        {order.status === 'Tamamlandı' && order.downloadLink ? (
+                                        {order.status === 'Tamamlandı' && order.download_link ? (
                                             <a
-                                                href={order.downloadLink}
+                                                href={order.download_link}
                                                 target="_blank"
                                                 className="btn btn-outline"
                                                 style={{
