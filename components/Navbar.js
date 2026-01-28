@@ -1,12 +1,14 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Video, Menu, X } from 'lucide-react';
+import { Video, Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from './AuthProvider';
 
 export default function Navbar() {
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { user, signOut } = useAuth();
 
     const isActive = (path) => pathname === path;
     const closeMenu = () => setIsMenuOpen(false);
@@ -50,12 +52,26 @@ export default function Navbar() {
 
                     {/* Auth Buttons */}
                     <div style={{ display: 'flex', gap: '15px', marginLeft: '20px' }}>
-                        <Link href="/giris" className="btn btn-outline" style={{ padding: '8px 20px' }}>
-                            Giriş Yap
-                        </Link>
-                        <Link href="/kayit" className="btn btn-primary" style={{ padding: '8px 20px' }}>
-                            Kayıt Ol
-                        </Link>
+                        {user ? (
+                            <>
+                                <Link href="/panel" className="btn btn-primary" style={{ padding: '8px 20px', display: 'flex', gap: '8px' }}>
+                                    <User size={18} />
+                                    Panelim
+                                </Link>
+                                <button onClick={signOut} className="btn btn-outline" style={{ padding: '8px' }} title="Çıkış Yap">
+                                    <LogOut size={18} />
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/giris" className="btn btn-outline" style={{ padding: '8px 20px' }}>
+                                    Giriş Yap
+                                </Link>
+                                <Link href="/kayit" className="btn btn-primary" style={{ padding: '8px 20px' }}>
+                                    Kayıt Ol
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -78,12 +94,26 @@ export default function Navbar() {
                     <NavLinkMobile href="/cekim-standartlari" onClick={closeMenu}>Standartlar</NavLinkMobile>
                     <NavLinkMobile href="/sss" onClick={closeMenu}>S.S.S</NavLinkMobile>
                     <hr style={{ borderColor: 'var(--border)', width: '100%' }} />
-                    <Link href="/giris" onClick={closeMenu} className="btn btn-outline" style={{ width: '100%' }}>
-                        Giriş Yap
-                    </Link>
-                    <Link href="/kayit" onClick={closeMenu} className="btn btn-primary" style={{ width: '100%' }}>
-                        Kayıt Ol
-                    </Link>
+
+                    {user ? (
+                        <>
+                            <Link href="/panel" onClick={closeMenu} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                                <User size={18} style={{ marginRight: '8px' }} /> Panelim
+                            </Link>
+                            <button onClick={() => { signOut(); closeMenu(); }} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
+                                <LogOut size={18} style={{ marginRight: '8px' }} /> Çıkış Yap
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link href="/giris" onClick={closeMenu} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
+                                Giriş Yap
+                            </Link>
+                            <Link href="/kayit" onClick={closeMenu} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                                Kayıt Ol
+                            </Link>
+                        </>
+                    )}
                 </div>
             )}
         </nav>

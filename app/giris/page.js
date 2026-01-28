@@ -2,28 +2,52 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            // For demo, if email contains 'admin', go to admin panel, else user panel
-            const email = e.target.email.value;
+        setError(null);
+
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) throw error;
+
+            // Check if admin email (for demo simplicity, real admin check should be in database)
             if (email.includes('admin')) {
                 router.push('/admin');
             } else {
                 router.push('/panel');
             }
-        }, 1000);
+
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleGoogleLogin = () => {
-        alert("Bu özellik tam sürümde aktif olacaktır (Backend bağlantısı gerekir).");
+    const handleGoogleLogin = async () => {
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+            });
+            if (error) throw error;
+        } catch (err) {
+            alert(err.message);
+        }
     };
 
     return (
@@ -32,6 +56,12 @@ export default function LoginPage() {
 
                 <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>Giriş Yap</h1>
                 <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '30px' }}>Hesabınıza erişin</p>
+
+                {error && (
+                    <div style={{ padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', marginBottom: '20px', fontSize: '0.9rem' }}>
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div>
@@ -113,7 +143,6 @@ export default function LoginPage() {
                         <path fill="#34A853" d="M12 23c2.97 0 5.67-1 7.72-2.88l-3.77-2.93c-1.05.71-2.42 1.13-3.95 1.13-3.46 0-6.45-3.12-7.8-7.39l-3.77 2.93C1.65 18.91 6.38 23 12 23z" />
                         <path fill="#4285F4" d="M4.2 13.31A11.96 11.96 0 0112 23c-5.62 0-10.35-4.09-11.57-9.38l3.77-2.93c.31 1.48 1.13 2.82 2.22 3.89l-2.22 2.22z" />
                         <path fill="#4285F4" d="M4.2 10.69C5.55 5.16 12 1.13 12 1.13l.43 1.91-3.77 2.93C7.45 6.51 6.36 8.39 5.86 10.51L2 7.64C2.65 6.23 3.4 5.04 4.2 10.69z" />
-                        {/* Simplified Google G Path for robustness, or use multiline paths */}
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.21.81-.63z" fill="#FBBC05" />
@@ -125,8 +154,6 @@ export default function LoginPage() {
                 <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                     Hesabınız yok mu? <Link href="/kayit" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Kayıt Ol</Link>
                 </div>
-
-                {/* Demo Tip Removed */}
 
             </div>
         </div>
