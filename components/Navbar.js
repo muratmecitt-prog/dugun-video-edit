@@ -55,7 +55,7 @@ export default function Navbar() {
                     <div className="navbar-auth" style={{ display: 'flex', gap: '15px', marginLeft: '20px' }}>
                         {user ? (
                             <>
-                                {(user.email === 'muratmecitt@gmail.com') && (
+                                {user?.email && (user.email === 'muratmecitt@gmail.com') && (
                                     <Link href="/admin" className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: 'var(--primary)', borderColor: 'var(--primary)' }}>
                                         ADMIN
                                     </Link>
@@ -100,7 +100,6 @@ export default function Navbar() {
                 <div className={`mobile-menu ${isMenuOpen ? 'open' : ''}`}>
                     <NavLinkMobile href="/paketler" onClick={closeMenu}>Paketler</NavLinkMobile>
                     <NavLinkMobile href="/nasil-calisir" onClick={closeMenu}>Nasıl Çalışır?</NavLinkMobile>
-                    <NavLinkMobile href="/cekim-standartlari" onClick={closeMenu}>Standartlar</NavLinkMobile>
                     <NavLinkMobile href="/sss" onClick={closeMenu}>S.S.S</NavLinkMobile>
                     <hr style={{ borderColor: 'var(--border)', width: '100%' }} />
 

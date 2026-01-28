@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
             setUser(session?.user ?? null);
             setLoading(false);
             if (event === 'SIGNED_OUT') {
-                router.push('/giris');
+                router.push('/'); // Consistently redirect to Home on sign out
             }
         });
 
@@ -35,8 +35,12 @@ export const AuthProvider = ({ children }) => {
     }, [router]);
 
     const signOut = async () => {
-        await supabase.auth.signOut();
-        router.push('/');
+        try {
+            setUser(null); // Clear local state first for immediate UI update
+            await supabase.auth.signOut();
+        } catch (err) {
+            console.error('Sign out error:', err);
+        }
     };
 
     return (
