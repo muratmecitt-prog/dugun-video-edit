@@ -13,10 +13,11 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
     const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
+    const [error, setError] = useState(null);
 
     // Security Check: Only allow if email matches owner
     useEffect(() => {
-        const isAdmin = user?.email === 'muratmecitt@gmail.com';
+        const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
         if (!isLoading && (!user || !isAdmin)) {
             router.push('/panel');
         }
@@ -24,23 +25,25 @@ export default function AdminDashboard() {
 
     const fetchOrders = async () => {
         setIsLoading(true);
+        setError(null);
         try {
-            const { data, error } = await supabase
+            const { data, fetchError } = await supabase
                 .from('orders')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (fetchError) throw fetchError;
             setOrders(data || []);
         } catch (err) {
             console.error('Error fetching admin orders:', err.message);
+            setError(err.message);
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        const isAdmin = user?.email === 'muratmecitt@gmail.com';
+        const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
         if (user && isAdmin) {
             fetchOrders();
         } else if (user && !isAdmin) {
@@ -92,7 +95,7 @@ export default function AdminDashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <div>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Admin Paneli</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tüm siparişleri yönetin</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tüm siparişleri yönetin (Giriş: {user?.email})</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                     <div style={{ textAlign: 'right' }}>
@@ -104,6 +107,14 @@ export default function AdminDashboard() {
                     </button>
                 </div>
             </div>
+
+            {error && (
+                <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '30px' }}>
+                    <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>Bağlantı Hatası:</h3>
+                    <p style={{ fontSize: '0.95rem' }}>{error}</p>
+                    <button onClick={fetchOrders} className="btn btn-outline" style={{ marginTop: '15px', padding: '5px 15px' }}>Tekrar Dene</button>
+                </div>
+            )}
 
             <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
