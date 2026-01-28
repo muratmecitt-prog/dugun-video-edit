@@ -18,13 +18,30 @@ function NewOrderForm() {
 
     // Form states
     const [formData, setFormData] = useState({
-        studio_name: '',
         couple_name: '',
         shoot_date: '',
         package: 'PAKET 1 — Teaser (2.000 TL)',
         wt_link: '',
         notes: ''
     });
+
+    const [studioName, setStudioName] = useState('');
+
+    // Fetch user's studio name
+    useEffect(() => {
+        const fetchStudio = async () => {
+            if (user) {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('studio_name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (data) setStudioName(data.studio_name);
+            }
+        };
+        fetchStudio();
+    }, [user]);
 
     // Handle package pre-selection from URL
     useEffect(() => {
@@ -55,7 +72,7 @@ function NewOrderForm() {
                 .insert([
                     {
                         user_id: user.id,
-                        studio_name: formData.studio_name,
+                        studio_name: studioName,
                         couple_name: formData.couple_name,
                         shoot_date: formData.shoot_date,
                         package: formData.package,
@@ -127,18 +144,11 @@ function NewOrderForm() {
 
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-                        <div>
-                            <label className="form-label">Stüdyo / Firma İsmi</label>
-                            <input
-                                required
-                                name="studio_name"
-                                value={formData.studio_name}
-                                onChange={handleChange}
-                                type="text"
-                                placeholder="Örn: Vega Medya"
-                                className="form-input"
-                            />
-                        </div>
+                        {studioName && (
+                            <div style={{ backgroundColor: 'var(--background)', padding: '12px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '0.9rem' }}>
+                                🏢 <strong>Stüdyo:</strong> {studioName} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>(Profilinizden otomatik alındı)</span>
+                            </div>
+                        )}
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                             <div>

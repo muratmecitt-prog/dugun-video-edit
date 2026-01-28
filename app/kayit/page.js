@@ -28,24 +28,38 @@ export default function RegisterPage() {
         const email = e.target.email.value;
         const password = e.target.password.value;
         const name = e.target.name.value;
+        const studioName = e.target.studio.value;
 
         try {
-            const { data, error } = await supabase.auth.signUp({
+            const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: {
                         full_name: name,
+                        studio_name: studioName
                     },
                 },
             });
 
-            if (error) throw error;
+            if (authError) throw authError;
 
-            // Success message in UI instead of alert
-            setSuccess('Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın.');
-            // Optional: Redirect after delay
-            // setTimeout(() => router.push('/giris'), 5000); 
+            // Also save to profiles table
+            if (authData.user) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .upsert({
+                        id: authData.user.id,
+                        full_name: name,
+                        studio_name: studioName,
+                        updated_at: new Date().toISOString()
+                    });
+
+                if (profileError) console.error('Profile save error:', profileError.message);
+            }
+
+            setSuccess('Kayıt başarılı! Lütfen giriş yapın (E-posta doğrulama gerekebilir).');
+            setTimeout(() => router.push('/giris'), 3000);
 
         } catch (err) {
             setError(translateError(err.message));
@@ -89,6 +103,18 @@ export default function RegisterPage() {
                             name="name"
                             type="text"
                             placeholder="Adınız Soyadınız"
+                            style={{ width: '100%', padding: '12px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-main)', fontSize: '1rem' }}
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="studio" style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Stüdyo / Firma İsmi</label>
+                        <input
+                            required
+                            id="studio"
+                            name="studio"
+                            type="text"
+                            placeholder="Örn: Vega Medya"
                             style={{ width: '100%', padding: '12px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-main)', fontSize: '1rem' }}
                         />
                     </div>

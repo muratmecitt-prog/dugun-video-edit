@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import StatusBadge from '@/components/StatusBadge';
-import { ExternalLink, Save, Loader2, LogOut, Check } from 'lucide-react';
+import { ExternalLink, Save, Loader2, LogOut, Check, Search } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
     const [updatingId, setUpdatingId] = useState(null);
     const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
     const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Security Check: Only allow if email matches owner
     useEffect(() => {
@@ -78,6 +79,12 @@ export default function AdminDashboard() {
         }
     };
 
+    const filteredOrders = orders.filter(order =>
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.studio_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.couple_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     if (isLoading) {
         return (
             <div className="container section" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', flexDirection: 'column', gap: '20px' }}>
@@ -102,7 +109,7 @@ export default function AdminDashboard() {
 
     return (
         <div className="container section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Admin Paneli</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tüm siparişleri yönetin (Giriş: {user?.email})</p>
@@ -116,6 +123,29 @@ export default function AdminDashboard() {
                         <LogOut size={18} /> Çıkış
                     </button>
                 </div>
+            </div>
+
+            <div style={{ marginBottom: '30px', position: 'relative' }}>
+                <Search style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={20} />
+                <input
+                    type="text"
+                    placeholder="Sipariş No, Stüdyo veya Çift İsmi ile ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{
+                        width: '100%',
+                        padding: '12px 12px 12px 45px',
+                        backgroundColor: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)',
+                        color: 'var(--text-main)',
+                        fontSize: '1rem',
+                        outline: 'none',
+                        transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+                />
             </div>
 
             {error && (
@@ -140,8 +170,8 @@ export default function AdminDashboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.length > 0 ? (
-                            orders.map((order) => (
+                        {filteredOrders.length > 0 ? (
+                            filteredOrders.map((order) => (
                                 <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                                     <td style={{ padding: '16px' }}>
                                         <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{order.id}</div>
