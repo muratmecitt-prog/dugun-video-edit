@@ -84,11 +84,7 @@ export default function LoginPage() {
                     Hesabınız yok mu? <Link href="/kayit" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Kayıt Ol</Link>
                 </div>
 
-                <div style={{ marginTop: '20px', padding: '10px', backgroundColor: 'var(--background)', borderRadius: 'var(--radius)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <p><strong>Demo İpucu:</strong></p>
-                    <p>Admin paneli için: admin@demo.com</p>
-                    <p>Kullanıcı paneli için: user@demo.com</p>
-                </div>
+                {/* Demo Tip Removed */}
 
             </div>
         </div>
