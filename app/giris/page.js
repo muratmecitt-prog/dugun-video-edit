@@ -33,8 +33,10 @@ export default function LoginPage() {
 
             if (error) throw error;
 
-            // Redirect to user panel (Admin check would normally happen here or on the protected page)
-            if (email.includes('admin')) {
+            // Redirect to user panel (Admin check)
+            const isAdmin = email.includes('admin') || email === 'muratmecitt@gmail.com';
+
+            if (isAdmin) {
                 router.push('/admin');
             } else {
                 router.push('/panel');

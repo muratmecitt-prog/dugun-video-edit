@@ -14,10 +14,10 @@ export default function AdminDashboard() {
     const [updatingId, setUpdatingId] = useState(null);
     const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
 
-    // Security Check: Only allow if email contains 'admin'
-    // In a real app, you'd use a 'role' column in a 'profiles' table.
+    // Security Check: Only allow if email contains 'admin' or matches owner
     useEffect(() => {
-        if (!isLoading && (!user || !user.email.includes('admin'))) {
+        const isAdmin = user?.email?.includes('admin') || user?.email === 'muratmecitt@gmail.com';
+        if (!isLoading && (!user || !isAdmin)) {
             router.push('/panel');
         }
     }, [user, isLoading, router]);
