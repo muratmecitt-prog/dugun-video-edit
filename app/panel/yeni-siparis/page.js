@@ -1,14 +1,15 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import BankDetails from '@/components/BankDetails';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 
-export default function NewOrderPage() {
+function NewOrderForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -24,6 +25,14 @@ export default function NewOrderPage() {
         wt_link: '',
         notes: ''
     });
+
+    // Handle package pre-selection from URL
+    useEffect(() => {
+        const pkg = searchParams.get('package');
+        if (pkg) {
+            setFormData(prev => ({ ...prev, package: pkg }));
+        }
+    }, [searchParams]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -256,5 +265,13 @@ export default function NewOrderPage() {
         }
       `}</style>
         </div>
+    );
+}
+
+export default function NewOrderPage() {
+    return (
+        <Suspense fallback={<div className="container section">Yükleniyor...</div>}>
+            <NewOrderForm />
+        </Suspense>
     );
 }

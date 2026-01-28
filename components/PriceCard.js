@@ -1,7 +1,20 @@
+"use client";
 import Link from 'next/link';
 import { Check } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function PriceCard({ title, price, duration, features, deliveryTime, isPopular }) {
+    const { user } = useAuth();
+
+    // Determine target link: if logged in, go to new order, else go to login
+    const packageSlug = `PAKET ${title === 'Teaser' ? '1' : title === 'Düğün Klibi' ? '2' : title === 'Teaser + Klip' ? '3' : '4'}`;
+    // We'll match precisely the text in the select options
+    const fullPackageName = `${packageSlug} — ${title} (${price} TL)`;
+
+    const targetHref = user
+        ? `/panel/yeni-siparis?package=${encodeURIComponent(fullPackageName)}`
+        : `/giris`;
+
     return (
         <div style={{
             backgroundColor: 'var(--surface)',
@@ -11,7 +24,9 @@ export default function PriceCard({ title, price, duration, features, deliveryTi
             position: 'relative',
             display: 'flex',
             flexDirection: 'column',
-            height: '100%'
+            height: '100%',
+            transition: 'transform 0.3s ease',
+            cursor: 'default'
         }}>
             {isPopular && (
                 <span style={{
@@ -23,7 +38,8 @@ export default function PriceCard({ title, price, duration, features, deliveryTi
                     fontSize: '0.8rem',
                     fontWeight: 'bold',
                     padding: '4px 12px',
-                    borderRadius: '20px'
+                    borderRadius: '20px',
+                    zIndex: 10
                 }}>
                     POPÜLER SEÇİM
                 </span>
@@ -57,7 +73,7 @@ export default function PriceCard({ title, price, duration, features, deliveryTi
                 )}
             </ul>
 
-            <Link href="/giris" className={isPopular ? "btn btn-primary" : "btn btn-outline"} style={{ width: '100%', textAlign: 'center' }}>
+            <Link href={targetHref} className={isPopular ? "btn btn-primary" : "btn btn-outline"} style={{ width: '100%', textAlign: 'center' }}>
                 Paketi Seç
             </Link>
         </div>
