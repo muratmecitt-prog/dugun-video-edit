@@ -9,6 +9,14 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Error Translation Helper
+    const translateError = (msg) => {
+        if (!msg) return 'Bir hata oluştu.';
+        if (msg.includes('Invalid login credentials')) return 'E-posta veya şifre hatalı.';
+        if (msg.includes('Email not confirmed')) return 'Lütfen e-posta adresinizi doğrulayın (Spam kutusunu kontrol edin).';
+        return 'Giriş yapılamadı: ' + msg;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -25,7 +33,7 @@ export default function LoginPage() {
 
             if (error) throw error;
 
-            // Check if admin email (for demo simplicity, real admin check should be in database)
+            // Redirect to user panel (Admin check would normally happen here or on the protected page)
             if (email.includes('admin')) {
                 router.push('/admin');
             } else {
@@ -33,21 +41,15 @@ export default function LoginPage() {
             }
 
         } catch (err) {
-            setError(err.message);
+            setError(translateError(err.message));
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleGoogleLogin = async () => {
-        try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-            });
-            if (error) throw error;
-        } catch (err) {
-            alert(err.message);
-        }
+        // Prevent raw error by alerting user instead of calling unconfigured API
+        alert("Google ile giriş şu an aktif değil. Lütfen E-posta ve Şifre ile giriş yapınız.");
     };
 
     return (

@@ -11,6 +11,7 @@ export default function RegisterPage() {
 
     // Error Translation Helper
     const translateError = (msg) => {
+        if (!msg) return 'Bir hata oluştu.';
         if (msg.includes('User already registered')) return 'Bu e-posta adresi zaten kayıtlı.';
         if (msg.includes('Password should be at least')) return 'Şifre en az 6 karakter olmalıdır.';
         if (msg.includes('invalid claim')) return 'Oturum hatası, lütfen sayfayı yenileyin.';
@@ -50,14 +51,8 @@ export default function RegisterPage() {
     };
 
     const handleGoogleLogin = async () => {
-        try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-            });
-            if (error) throw error;
-        } catch (err) {
-            alert(err.message);
-        }
+        // Prevent raw error by alerting user instead of calling unconfigured API
+        alert("Google ile kayıt şu an aktif değil. Lütfen E-posta ve Şifre ile kayıt olunuz.");
     };
 
     return (
