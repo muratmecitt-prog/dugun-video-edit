@@ -14,9 +14,9 @@ export default function AdminDashboard() {
     const [updatingId, setUpdatingId] = useState(null);
     const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
 
-    // Security Check: Only allow if email contains 'admin' or matches owner
+    // Security Check: Only allow if email matches owner
     useEffect(() => {
-        const isAdmin = user?.email?.includes('admin') || user?.email === 'muratmecitt@gmail.com';
+        const isAdmin = user?.email === 'muratmecitt@gmail.com';
         if (!isLoading && (!user || !isAdmin)) {
             router.push('/panel');
         }
@@ -40,7 +40,7 @@ export default function AdminDashboard() {
     };
 
     useEffect(() => {
-        const isAdmin = user?.email?.includes('admin') || user?.email === 'muratmecitt@gmail.com';
+        const isAdmin = user?.email === 'muratmecitt@gmail.com';
         if (user && isAdmin) {
             fetchOrders();
         } else if (user && !isAdmin) {

@@ -55,7 +55,7 @@ export default function Navbar() {
                     <div className="navbar-auth" style={{ display: 'flex', gap: '15px', marginLeft: '20px' }}>
                         {user ? (
                             <>
-                                {(user.email && (user.email.includes('admin') || user.email === 'muratmecitt@gmail.com')) && (
+                                {(user.email === 'muratmecitt@gmail.com') && (
                                     <Link href="/admin" className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: 'var(--primary)', borderColor: 'var(--primary)' }}>
                                         ADMIN
                                     </Link>
