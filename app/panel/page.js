@@ -8,13 +8,8 @@ import BankDetails from '@/components/BankDetails';
 export default function UserDashboard() {
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Mock Data with DD.MM.YYYY format
-    const allOrders = [
-        { id: 'ORD-001', date: '15.09.2023', couple: 'Ayşe & Ahmet', package: 'Düğün Klibi', status: 'Tamamlandı', downloadLink: 'https://we.tl/example1' },
-        { id: 'ORD-002', date: '02.10.2023', couple: 'Zeynep & Can', package: 'Teaser', status: 'Kurguda', downloadLink: null },
-        { id: 'ORD-003', date: '20.08.2023', couple: 'Elif & Mehmet', package: 'Belgesel', status: 'Tamamlandı', downloadLink: 'https://we.tl/example2' },
-        { id: 'ORD-004', date: '10.11.2023', couple: 'Selin & Burak', package: 'Teaser + Klip', status: 'Bekleniyor', downloadLink: null },
-    ];
+    // Mock Data (Empty for fresh start)
+    const allOrders = [];
 
     // Filter logic for search
     const filteredOrders = allOrders.filter(order =>
@@ -66,46 +61,49 @@ export default function UserDashboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredOrders.map((order) => (
-                            <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                <td style={{ padding: '16px', fontWeight: 'bold' }}>{order.id}</td>
-                                <td style={{ padding: '16px' }}>{order.couple}</td>
-                                <td style={{ padding: '16px' }}>{order.package}</td>
-                                <td style={{ padding: '16px', color: 'var(--text-main)', fontWeight: '500' }}>{order.date}</td>
-                                <td style={{ padding: '16px' }}><StatusBadge status={order.status} /></td>
-                                <td style={{ padding: '16px' }}>
-                                    {order.status === 'Tamamlandı' && order.downloadLink ? (
-                                        <a
-                                            href={order.downloadLink}
-                                            target="_blank"
-                                            className="btn btn-outline"
-                                            style={{
-                                                padding: '8px 16px',
-                                                fontSize: '0.9rem',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                                borderColor: 'var(--primary)',
-                                                color: 'var(--primary)',
-                                                textDecoration: 'none'
-                                            }}
-                                        >
-                                            <Download size={16} />
-                                            İndir
-                                        </a>
-                                    ) : (
-                                        <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>-</span>
-                                    )}
+                        {filteredOrders.length > 0 ? (
+                            filteredOrders.map((order) => (
+                                <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                    <td style={{ padding: '16px', fontWeight: 'bold' }}>{order.id}</td>
+                                    <td style={{ padding: '16px' }}>{order.couple}</td>
+                                    <td style={{ padding: '16px' }}>{order.package}</td>
+                                    <td style={{ padding: '16px', color: 'var(--text-main)', fontWeight: '500' }}>{order.date}</td>
+                                    <td style={{ padding: '16px' }}><StatusBadge status={order.status} /></td>
+                                    <td style={{ padding: '16px' }}>
+                                        {order.status === 'Tamamlandı' && order.downloadLink ? (
+                                            <a
+                                                href={order.downloadLink}
+                                                target="_blank"
+                                                className="btn btn-outline"
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    fontSize: '0.9rem',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    borderColor: 'var(--primary)',
+                                                    color: 'var(--primary)',
+                                                    textDecoration: 'none'
+                                                }}
+                                            >
+                                                <Download size={16} />
+                                                İndir
+                                            </a>
+                                        ) : (
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>-</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                    Henüz hiç siparişiniz bulunmuyor.
                                 </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
-                {filteredOrders.length === 0 && (
-                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                        Aradığınız kriterlere uygun sipariş bulunamadı.
-                    </div>
-                )}
             </div>
 
             {/* Quick Access to Bank Details */}
