@@ -80,14 +80,24 @@ export default function AdminDashboard() {
 
     if (isLoading) {
         return (
-            <div className="container section" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+            <div className="container section" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', flexDirection: 'column', gap: '20px' }}>
                 <Loader2 className="animate-spin" size={48} color="var(--primary)" />
+                <p>Veriler yükleniyor...</p>
             </div>
         );
     }
 
-    if (!user || !user.email.includes('admin')) {
-        return null; // Will redirect via useEffect
+    const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
+
+    if (!user || !isAdmin) {
+        return (
+            <div className="container section" style={{ textAlign: 'center', padding: '100px 20px' }}>
+                <h1 style={{ color: '#ef4444' }}>⚠️ Yetkisiz Erişim</h1>
+                <p style={{ marginTop: '20px' }}>Bu sayfayı görmeye yetkiniz bulunmamaktadır.</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '10px' }}>Giriş Yapılan Email: {user?.email || 'Giriş yapılmadı'}</p>
+                <Link href="/panel" className="btn btn-primary" style={{ marginTop: '30px' }}>Panele Dön</Link>
+            </div>
+        );
     }
 
     return (
