@@ -1,7 +1,7 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Video, Menu, X, User, LogOut } from 'lucide-react';
+import { Video, Menu, X, User, LogOut, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 
@@ -44,19 +44,28 @@ export default function Navbar() {
                 </Link>
 
                 {/* Desktop Links */}
-                <div className="desktop-nav" style={{ gap: '30px', alignItems: 'center' }}>
-                    <NavLink href="/paketler" active={isActive('/paketler')}>Paketler</NavLink>
-                    <NavLink href="/nasil-calisir" active={isActive('/nasil-calisir')}>Nasıl Çalışır?</NavLink>
-                    <NavLink href="/cekim-standartlari" active={isActive('/cekim-standartlari')}>Standartlar</NavLink>
-                    <NavLink href="/sss" active={isActive('/sss')}>S.S.S</NavLink>
+                <div className="desktop-nav" style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+                    <div className="navbar-menu">
+                        <NavLink href="/paketler" active={isActive('/paketler')}>Paketler</NavLink>
+                        <NavLink href="/nasil-calisir" active={isActive('/nasil-calisir')}>Nasıl Çalışır?</NavLink>
+                        <NavLink href="/sss" active={isActive('/sss')}>S.S.S.</NavLink>
+                        <NavLink href="/iletisim" active={isActive('/iletisim')}>İletişim</NavLink>
+                    </div>
 
-                    {/* Auth Buttons */}
-                    <div style={{ display: 'flex', gap: '15px', marginLeft: '20px' }}>
+                    <div className="navbar-auth" style={{ display: 'flex', gap: '15px', marginLeft: '20px' }}>
                         {user ? (
                             <>
+                                {(user.email && (user.email.includes('admin') || user.email === 'muratmecitt@gmail.com')) && (
+                                    <Link href="/admin" className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem', color: 'var(--primary)', borderColor: 'var(--primary)' }}>
+                                        ADMIN
+                                    </Link>
+                                )}
                                 <Link href="/panel" className="btn btn-primary" style={{ padding: '8px 20px', display: 'flex', gap: '8px' }}>
                                     <User size={18} />
                                     Panelim
+                                </Link>
+                                <Link href="/panel/ayarlar" className="btn btn-outline" style={{ padding: '8px' }} title="Ayarlar">
+                                    <Settings size={18} />
                                 </Link>
                                 <button onClick={signOut} className="btn btn-outline" style={{ padding: '8px' }} title="Çıkış Yap">
                                     <LogOut size={18} />
