@@ -9,6 +9,14 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // Error Translation Helper
+    const translateError = (msg) => {
+        if (msg.includes('User already registered')) return 'Bu e-posta adresi zaten kayıtlı.';
+        if (msg.includes('Password should be at least')) return 'Şifre en az 6 karakter olmalıdır.';
+        if (msg.includes('invalid claim')) return 'Oturum hatası, lütfen sayfayı yenileyin.';
+        return 'Kayıt başarısız: ' + msg;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
@@ -35,7 +43,7 @@ export default function RegisterPage() {
             router.push('/giris');
 
         } catch (err) {
-            setError(err.message);
+            setError(translateError(err.message));
         } finally {
             setIsLoading(false);
         }
