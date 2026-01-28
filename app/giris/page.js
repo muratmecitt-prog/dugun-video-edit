@@ -48,8 +48,8 @@ export default function LoginPage() {
     };
 
     const handleGoogleLogin = async () => {
-        // Prevent raw error by alerting user instead of calling unconfigured API
-        alert("Google ile giriş şu an aktif değil. Lütfen E-posta ve Şifre ile giriş yapınız.");
+        // Show as error/info in UI
+        setError("Google ile giriş şu an aktif değil. Lütfen E-posta ve Şifre ile giriş yapınız.");
     };
 
     return (
@@ -60,8 +60,8 @@ export default function LoginPage() {
                 <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '30px' }}>Hesabınıza erişin</p>
 
                 {error && (
-                    <div style={{ padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', marginBottom: '20px', fontSize: '0.9rem' }}>
-                        {error}
+                    <div style={{ padding: '12px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                        ⚠️ {error}
                     </div>
                 )}
 

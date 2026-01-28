@@ -8,6 +8,7 @@ export default function RegisterPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null); // New success state
 
     // Error Translation Helper
     const translateError = (msg) => {
@@ -22,6 +23,7 @@ export default function RegisterPage() {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
+        setSuccess(null);
 
         const email = e.target.email.value;
         const password = e.target.password.value;
@@ -40,8 +42,10 @@ export default function RegisterPage() {
 
             if (error) throw error;
 
-            alert('Kayıt başarılı! Lütfen e-posta adresinize gelen doğrulama linkine tıklayın.');
-            router.push('/giris');
+            // Success message in UI instead of alert
+            setSuccess('Kayıt başarılı! Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın.');
+            // Optional: Redirect after delay
+            // setTimeout(() => router.push('/giris'), 5000); 
 
         } catch (err) {
             setError(translateError(err.message));
@@ -51,8 +55,8 @@ export default function RegisterPage() {
     };
 
     const handleGoogleLogin = async () => {
-        // Prevent raw error by alerting user instead of calling unconfigured API
-        alert("Google ile kayıt şu an aktif değil. Lütfen E-posta ve Şifre ile kayıt olunuz.");
+        // Show as info/error message in UI instead of alert
+        setError("Google ile kayıt şu an aktif değil. Lütfen E-posta ve Şifre ile kayıt olunuz.");
     };
 
     return (
@@ -62,9 +66,17 @@ export default function RegisterPage() {
                 <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>Kayıt Ol</h1>
                 <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '30px' }}>Hızlı kurgu dünyasına katılın</p>
 
+                {/* Success Message UI */}
+                {success && (
+                    <div style={{ padding: '16px', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#4ade80', borderRadius: 'var(--radius)', marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                        ✅ {success}
+                    </div>
+                )}
+
+                {/* Error Message UI */}
                 {error && (
-                    <div style={{ padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', marginBottom: '20px', fontSize: '0.9rem' }}>
-                        {error}
+                    <div style={{ padding: '12px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                        ⚠️ {error}
                     </div>
                 )}
 
