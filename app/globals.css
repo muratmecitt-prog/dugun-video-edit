@@ -66,6 +66,21 @@ button {
   padding: 80px 0;
 }
 
+.navbar-menu {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: color 0.3s ease;
+  font-size: 0.95rem;
+  padding: 5px 0;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

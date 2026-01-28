@@ -131,10 +131,9 @@ export default function Navbar() {
 
 function NavLink({ href, children, active }) {
     return (
-        <Link href={href} style={{
-            color: active ? 'var(--primary)' : 'var(--text-secondary)',
-            fontWeight: active ? '500' : '400',
-            transition: 'color 0.2s'
+        <Link href={href} className="nav-link" style={{
+            color: active ? 'var(--primary)' : undefined,
+            fontWeight: active ? '600' : undefined
         }}>
             {children}
         </Link>

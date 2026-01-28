@@ -40,8 +40,11 @@ export default function AdminDashboard() {
     };
 
     useEffect(() => {
-        if (user && user.email.includes('admin')) {
+        const isAdmin = user?.email?.includes('admin') || user?.email === 'muratmecitt@gmail.com';
+        if (user && isAdmin) {
             fetchOrders();
+        } else if (user && !isAdmin) {
+            setIsLoading(false); // Stop loading so security check can redirect
         }
     }, [user]);
 
