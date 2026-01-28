@@ -73,7 +73,7 @@ export default function NewOrderPage() {
 
                         <div>
                             <label className="form-label">Ek Notlar (Opsiyonel)</label>
-                            <textarea rows="4" placeholder="Kurgu için özel istekleriniz..." className="form-input" />
+                            <textarea rows="4" placeholder="Varsa video ile ilgili kısa notlarınız..." className="form-input" />
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '10px' }}>
