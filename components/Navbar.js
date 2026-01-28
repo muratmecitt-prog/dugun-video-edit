@@ -1,12 +1,15 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Video } from 'lucide-react';
+import { Video, Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Navbar() {
     const pathname = usePathname();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const isActive = (path) => pathname === path;
+    const closeMenu = () => setIsMenuOpen(false);
 
     return (
         <nav style={{
@@ -22,7 +25,7 @@ export default function Navbar() {
             <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 
                 {/* Logo */}
-                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.25rem', fontWeight: 'bold' }}>
+                <Link href="/" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.25rem', fontWeight: 'bold' }}>
                     <div style={{
                         width: '40px',
                         height: '40px',
@@ -35,28 +38,54 @@ export default function Navbar() {
                     }}>
                         <Video size={24} />
                     </div>
-                    Düğün Video Edit
+                    <span>Düğün Video Edit</span>
                 </Link>
 
-                {/* Links */}
-                <div style={{ display: 'flex', gap: '30px' }}>
+                {/* Desktop Links */}
+                <div className="desktop-nav" style={{ gap: '30px', alignItems: 'center' }}>
                     <NavLink href="/paketler" active={isActive('/paketler')}>Paketler</NavLink>
                     <NavLink href="/nasil-calisir" active={isActive('/nasil-calisir')}>Nasıl Çalışır?</NavLink>
                     <NavLink href="/cekim-standartlari" active={isActive('/cekim-standartlari')}>Standartlar</NavLink>
                     <NavLink href="/sss" active={isActive('/sss')}>S.S.S</NavLink>
+
+                    {/* Auth Buttons */}
+                    <div style={{ display: 'flex', gap: '15px', marginLeft: '20px' }}>
+                        <Link href="/giris" className="btn btn-outline" style={{ padding: '8px 20px' }}>
+                            Giriş Yap
+                        </Link>
+                        <Link href="/kayit" className="btn btn-primary" style={{ padding: '8px 20px' }}>
+                            Kayıt Ol
+                        </Link>
+                    </div>
                 </div>
 
-                {/* Auth Buttons */}
-                <div style={{ display: 'flex', gap: '15px' }}>
-                    <Link href="/giris" className="btn btn-outline" style={{ padding: '8px 20px' }}>
+                {/* Mobile Hamburger */}
+                <button
+                    className="mobile-nav-toggle"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-main)' }}
+                >
+                    {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                </button>
+
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            {isMenuOpen && (
+                <div className={`mobile-menu ${isMenuOpen ? 'open' : ''}`}>
+                    <NavLinkMobile href="/paketler" onClick={closeMenu}>Paketler</NavLinkMobile>
+                    <NavLinkMobile href="/nasil-calisir" onClick={closeMenu}>Nasıl Çalışır?</NavLinkMobile>
+                    <NavLinkMobile href="/cekim-standartlari" onClick={closeMenu}>Standartlar</NavLinkMobile>
+                    <NavLinkMobile href="/sss" onClick={closeMenu}>S.S.S</NavLinkMobile>
+                    <hr style={{ borderColor: 'var(--border)', width: '100%' }} />
+                    <Link href="/giris" onClick={closeMenu} className="btn btn-outline" style={{ width: '100%' }}>
                         Giriş Yap
                     </Link>
-                    <Link href="/kayit" className="btn btn-primary" style={{ padding: '8px 20px' }}>
+                    <Link href="/kayit" onClick={closeMenu} className="btn btn-primary" style={{ width: '100%' }}>
                         Kayıt Ol
                     </Link>
                 </div>
-
-            </div>
+            )}
         </nav>
     );
 }
@@ -67,6 +96,20 @@ function NavLink({ href, children, active }) {
             color: active ? 'var(--primary)' : 'var(--text-secondary)',
             fontWeight: active ? '500' : '400',
             transition: 'color 0.2s'
+        }}>
+            {children}
+        </Link>
+    );
+}
+
+function NavLinkMobile({ href, children, onClick }) {
+    return (
+        <Link href={href} onClick={onClick} style={{
+            fontSize: '1.2rem',
+            padding: '10px 0',
+            color: 'var(--text-main)',
+            borderBottom: '1px solid var(--border)',
+            width: '100%'
         }}>
             {children}
         </Link>
