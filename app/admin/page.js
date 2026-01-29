@@ -41,10 +41,11 @@ export default function AdminDashboard() {
             if (fetchError) throw fetchError;
 
             // Fetch emails/phones from profiles to show in admin
+            // Fetch profile data (studio name, email, phone) to show live data in admin
             const userIds = [...new Set(ordersData.map(o => o.user_id))];
             const { data: profilesData } = await supabase
                 .from('profiles')
-                .select('id, phone, email')
+                .select('id, phone, email, studio_name')
                 .in('id', userIds);
 
             const enrichedOrders = ordersData.map(order => {
@@ -52,7 +53,9 @@ export default function AdminDashboard() {
                 return {
                     ...order,
                     phone: profile?.phone || 'Yok',
-                    email: profile?.email || 'Yok'
+                    email: profile?.email || 'Yok',
+                    // Use live studio name from profile if available, fallback to order's fixed name
+                    studio_name: profile?.studio_name || order.studio_name
                 };
             });
 
