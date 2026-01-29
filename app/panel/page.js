@@ -357,8 +357,7 @@ export default function UserDashboard() {
                                 <div style={{ fontSize: '0.85rem', lineHeight: '1.5', color: 'var(--text-secondary)' }}>
                                     <strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Revize Politikamız:</strong>
                                     • Görüntülerde sadece saniyeler arası değişim veya çıkar-ekle yapılabilir (Max 5 adet).<br />
-                                    • Müzik değişimi kurgu akışını değiştirmeden sadece ses dosyası bazlı yapılır.<br />
-                                    • Daha büyük kurgu değişiklikleri ek ücrete tabi olabilir.
+                                    • Müzik değişimi kurgu aynı kalacak şekilde yapılır, sadece seçtiğiniz yeni müzik eklenir.
                                 </div>
                             </div>
 
