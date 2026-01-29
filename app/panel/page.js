@@ -44,31 +44,34 @@ export default function UserDashboard() {
         const formData = new FormData(e.target);
         const text = formData.get('revision_text');
         const link = formData.get('revision_link');
-        const file = formData.get('revision_image');
+        const file = formData.get('revision_image'); // This might be single if not updated, but we will use files from e.target
+        const files = e.target.revision_images.files;
 
         try {
-            let imageUrl = revisionOrder.revision_image;
+            let imageUrls = revisionOrder.revision_images || [];
 
-            if (file && file.size > 0) {
-                if (file.size > 2 * 1024 * 1024) {
-                    alert('Görsel boyutu 2MB\'dan küçük olmalıdır.');
-                    setIsRevising(false);
-                    return;
-                }
+            if (files && files.length > 0) {
                 setUploading(true);
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${revisionOrder.id}_${Math.random()}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('revisions')
-                    .upload(fileName, file);
+                for (let i = 0; i < files.length; i++) {
+                    const f = files[i];
+                    if (f.size > 2 * 1024 * 1024) {
+                        alert(`${f.name} boyutu 2MB'den büyük olduğu için atlandı.`);
+                        continue;
+                    }
+                    const fileExt = f.name.split('.').pop();
+                    const fileName = `${revisionOrder.id}_${Math.random()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('revisions')
+                        .upload(fileName, f);
 
-                if (uploadError) throw uploadError;
+                    if (uploadError) throw uploadError;
 
-                const { data: publicUrl } = supabase.storage
-                    .from('revisions')
-                    .getPublicUrl(fileName);
+                    const { data: publicUrl } = supabase.storage
+                        .from('revisions')
+                        .getPublicUrl(fileName);
 
-                imageUrl = publicUrl.publicUrl;
+                    imageUrls.push(publicUrl.publicUrl);
+                }
             }
 
             const { error: updateError } = await supabase
@@ -76,14 +79,15 @@ export default function UserDashboard() {
                 .update({
                     revision_text: text,
                     revision_link: link,
-                    revision_image: imageUrl,
+                    revision_images: imageUrls,
+                    status: 'Revize Ediliyor', // Auto-revert status
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', revisionOrder.id);
 
             if (updateError) throw updateError;
 
-            alert('Revize talebiniz başarıyla iletildi.');
+            alert('Revize talebiniz başarıyla iletildi ve sipariş durumunuz "Revize Ediliyor" olarak güncellendi.');
             setRevisionOrder(null);
             fetchOrders();
         } catch (err) {
@@ -216,43 +220,47 @@ export default function UserDashboard() {
                                     <td style={{ padding: '16px' }}><StatusBadge status={order.status} /></td>
                                     <td style={{ padding: '16px' }}>
                                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            {order.status === 'Tamamlandı' && order.download_link ? (
-                                                <a
-                                                    href={order.download_link}
-                                                    target="_blank"
-                                                    className="btn btn-outline"
-                                                    style={{
-                                                        padding: '8px 16px',
-                                                        fontSize: '0.9rem',
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        borderColor: 'var(--primary)',
-                                                        color: 'var(--primary)',
-                                                        textDecoration: 'none'
-                                                    }}
-                                                >
-                                                    <Download size={16} />
-                                                    İndir
-                                                </a>
-                                            ) : order.status === 'Revize Ediliyor' ? (
-                                                <button
-                                                    onClick={() => setRevisionOrder(order)}
-                                                    className="btn btn-outline"
-                                                    style={{
-                                                        padding: '8px 16px',
-                                                        fontSize: '0.9rem',
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        borderColor: '#a855f7',
-                                                        color: '#a855f7'
-                                                    }}
-                                                >
-                                                    <Edit3 size={16} />
-                                                    Revize İste
-                                                </button>
-                                            ) : (
+                                            {order.status === 'Tamamlandı' && (
+                                                <>
+                                                    {order.download_link && (
+                                                        <a
+                                                            href={order.download_link}
+                                                            target="_blank"
+                                                            className="btn btn-outline"
+                                                            style={{
+                                                                padding: '8px 16px',
+                                                                fontSize: '0.9rem',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '8px',
+                                                                borderColor: 'var(--primary)',
+                                                                color: 'var(--primary)',
+                                                                textDecoration: 'none'
+                                                            }}
+                                                        >
+                                                            <Download size={16} />
+                                                            İndir
+                                                        </a>
+                                                    )}
+                                                    <button
+                                                        onClick={() => setRevisionOrder(order)}
+                                                        className="btn btn-outline"
+                                                        style={{
+                                                            padding: '8px 16px',
+                                                            fontSize: '0.9rem',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px',
+                                                            borderColor: '#a855f7',
+                                                            color: '#a855f7'
+                                                        }}
+                                                    >
+                                                        <Edit3 size={16} />
+                                                        Revize İste
+                                                    </button>
+                                                </>
+                                            )}
+                                            {order.status !== 'Tamamlandı' && (
                                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>-</span>
                                             )}
                                         </div>
@@ -319,18 +327,19 @@ export default function UserDashboard() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Ekran Görüntüsü (Varsa - Max 2MB)</label>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Ekran Görüntüleri (Max 2MB per image)</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <input
-                                        name="revision_image"
+                                        name="revision_images"
                                         type="file"
                                         accept="image/*"
+                                        multiple
                                         style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}
                                     />
                                     <ImageIcon size={20} color="var(--text-muted)" />
                                 </div>
-                                {revisionOrder.revision_image && (
-                                    <div style={{ marginTop: '5px', fontSize: '0.75rem', color: 'var(--primary)' }}>Mevcut görsel sistemde kayıtlı. Yeni seçerseniz güncellenir.</div>
+                                {revisionOrder.revision_images && revisionOrder.revision_images.length > 0 && (
+                                    <div style={{ marginTop: '5px', fontSize: '0.75rem', color: 'var(--primary)' }}>{revisionOrder.revision_images.length} görsel kayıtlı. Yeni seçerseniz liste güncellenir.</div>
                                 )}
                             </div>
 

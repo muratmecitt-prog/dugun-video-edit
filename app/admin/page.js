@@ -443,21 +443,37 @@ export default function AdminDashboard() {
                                 </div>
                             )}
 
-                            {viewingRevision.revision_image && (
+                            {(viewingRevision.revision_images && viewingRevision.revision_images.length > 0) || viewingRevision.revision_image ? (
                                 <div>
-                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ekran Görüntüsü</h4>
-                                    <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)' }}>
-                                        <img
-                                            src={viewingRevision.revision_image}
-                                            alt="Revision screenshot"
-                                            style={{ width: '100%', display: 'block' }}
-                                        />
-                                        <div style={{ padding: '12px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
-                                            <a href={viewingRevision.revision_image} target="_blank" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none' }}>Tam Boyut Görüntüle</a>
-                                        </div>
+                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Ekran Görüntüleri ({viewingRevision.revision_images?.length || 1})
+                                    </h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
+                                        {/* Show multi images if exist */}
+                                        {viewingRevision.revision_images?.map((img, idx) => (
+                                            <div key={idx} style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
+                                                <img
+                                                    src={img}
+                                                    alt={`Revision screenshot ${idx + 1}`}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                                />
+                                                <a href={img} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                                            </div>
+                                        ))}
+                                        {/* Backward compatibility for single image */}
+                                        {!viewingRevision.revision_images?.length && viewingRevision.revision_image && (
+                                            <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
+                                                <img
+                                                    src={viewingRevision.revision_image}
+                                                    alt="Revision screenshot"
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                                />
+                                                <a href={viewingRevision.revision_image} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            )}
+                            ) : null}
                         </div>
 
                         <div style={{ padding: '20px', backgroundColor: 'var(--background)', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
