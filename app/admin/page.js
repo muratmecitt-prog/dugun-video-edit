@@ -28,13 +28,31 @@ export default function AdminDashboard() {
         setIsLoading(true);
         setError(null);
         try {
-            const { data, fetchError } = await supabase
+            // Fetch orders
+            const { data: ordersData, fetchError } = await supabase
                 .from('orders')
                 .select('*')
                 .order('created_at', { ascending: false });
 
             if (fetchError) throw fetchError;
-            setOrders(data || []);
+
+            // Fetch emails/phones from profiles to show in admin
+            const userIds = [...new Set(ordersData.map(o => o.user_id))];
+            const { data: profilesData } = await supabase
+                .from('profiles')
+                .select('id, phone, email')
+                .in('id', userIds);
+
+            const enrichedOrders = ordersData.map(order => {
+                const profile = profilesData?.find(p => p.id === order.user_id);
+                return {
+                    ...order,
+                    phone: profile?.phone || 'Yok',
+                    email: profile?.email || 'Yok'
+                };
+            });
+
+            setOrders(enrichedOrders);
         } catch (err) {
             console.error('Error fetching admin orders:', err.message);
             setError(err.message);
@@ -79,11 +97,16 @@ export default function AdminDashboard() {
         }
     };
 
-    const filteredOrders = orders.filter(order =>
-        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.studio_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.couple_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOrders = orders.filter(order => {
+        const searchStr = searchTerm.toLowerCase();
+        return (
+            order.id.toLowerCase().includes(searchStr) ||
+            (order.studio_name || '').toLowerCase().includes(searchStr) ||
+            (order.couple_name || '').toLowerCase().includes(searchStr) ||
+            (order.phone || '').toLowerCase().includes(searchStr) ||
+            (order.email || '').toLowerCase().includes(searchStr)
+        );
+    });
 
     if (isLoading) {
         return (
@@ -161,9 +184,10 @@ export default function AdminDashboard() {
                     <thead>
                         <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                             <th style={{ padding: '16px' }}>Sipariş No</th>
-                            <th style={{ padding: '16px' }}>Müşteri / Stüdyo</th>
+                            <th style={{ padding: '16px' }}>Stüdyo Bilgileri</th>
+                            <th style={{ padding: '16px' }}>Müşteri (Çift)</th>
                             <th style={{ padding: '16px' }}>Paket</th>
-                            <th style={{ padding: '16px' }}>Ham Dosya (WeTransfer)</th>
+                            <th style={{ padding: '16px' }}>Ham Dosya</th>
                             <th style={{ padding: '16px' }}>Durum</th>
                             <th style={{ padding: '16px' }}>Teslimat Linki</th>
                             <th style={{ padding: '16px' }}>İşlem</th>
@@ -178,15 +202,19 @@ export default function AdminDashboard() {
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(order.created_at).toLocaleDateString('tr-TR')}</div>
                                     </td>
                                     <td style={{ padding: '16px' }}>
-                                        <div style={{ fontWeight: '500' }}>{order.studio_name}</div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{order.couple_name}</div>
+                                        <div style={{ fontWeight: '500', color: 'var(--text-main)' }}>{order.studio_name}</div>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{order.email}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '4px' }}>📞 {order.phone}</div>
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{ fontWeight: '500' }}>{order.couple_name}</div>
                                     </td>
                                     <td style={{ padding: '16px' }}>
                                         <span style={{ fontSize: '0.85rem' }}>{order.package.split('—')[1] || order.package}</span>
                                     </td>
                                     <td style={{ padding: '16px' }}>
                                         <a href={order.wt_link} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--primary)', fontWeight: '500', fontSize: '0.9rem' }}>
-                                            <ExternalLink size={14} /> Linki Aç
+                                            <ExternalLink size={14} /> Aç
                                         </a>
                                     </td>
                                     <td style={{ padding: '16px' }}>

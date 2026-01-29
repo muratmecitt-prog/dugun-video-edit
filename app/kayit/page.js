@@ -29,6 +29,7 @@ export default function RegisterPage() {
         const password = e.target.password.value;
         const name = e.target.name.value;
         const studioName = e.target.studio.value;
+        const phone = e.target.phone.value;
 
         try {
             const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -37,7 +38,8 @@ export default function RegisterPage() {
                 options: {
                     data: {
                         full_name: name,
-                        studio_name: studioName
+                        studio_name: studioName,
+                        phone: phone
                     },
                 },
             });
@@ -52,6 +54,8 @@ export default function RegisterPage() {
                         id: authData.user.id,
                         full_name: name,
                         studio_name: studioName,
+                        phone: phone,
+                        email: email,
                         updated_at: new Date().toISOString()
                     });
 
@@ -115,6 +119,18 @@ export default function RegisterPage() {
                             name="studio"
                             type="text"
                             placeholder="Örn: Vega Medya"
+                            style={{ width: '100%', padding: '12px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-main)', fontSize: '1rem' }}
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="phone" style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Telefon Numarası</label>
+                        <input
+                            required
+                            id="phone"
+                            name="phone"
+                            type="tel"
+                            placeholder="05xx xxx xx xx"
                             style={{ width: '100%', padding: '12px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-main)', fontSize: '1rem' }}
                         />
                     </div>

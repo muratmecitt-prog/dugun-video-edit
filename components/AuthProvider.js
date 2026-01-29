@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
             setUser(session?.user ?? null);
             setLoading(false);
             if (event === 'SIGNED_OUT') {
-                router.push('/'); // Consistently redirect to Home on sign out
+                window.location.href = '/'; // Hard redirect to clear everything and avoid Next.js exceptions
             }
         });
 
@@ -36,10 +36,10 @@ export const AuthProvider = ({ children }) => {
 
     const signOut = async () => {
         try {
-            setUser(null); // Clear local state first for immediate UI update
             await supabase.auth.signOut();
         } catch (err) {
             console.error('Sign out error:', err);
+            window.location.href = '/'; // Fallback redirect
         }
     };
 
