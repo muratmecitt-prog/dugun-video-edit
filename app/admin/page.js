@@ -130,6 +130,8 @@ export default function AdminDashboard() {
         );
     }
 
+    if (!user) return null; // Final safety for sign-out flicker
+
     return (
         <div className="container section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>

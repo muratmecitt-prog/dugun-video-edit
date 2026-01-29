@@ -124,9 +124,8 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label htmlFor="phone" style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Telefon Numarası</label>
+                        <label htmlFor="phone" style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Telefon Numarası (Opsiyonel)</label>
                         <input
-                            required
                             id="phone"
                             name="phone"
                             type="tel"

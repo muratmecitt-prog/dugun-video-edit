@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
-import { User, Building, Lock, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { User, Building, Lock, Save, Loader2, CheckCircle2, Phone } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
@@ -14,7 +14,8 @@ export default function SettingsPage() {
     // Profile State
     const [profile, setProfile] = useState({
         full_name: '',
-        studio_name: ''
+        studio_name: '',
+        phone: ''
     });
 
     // Password State
@@ -37,7 +38,8 @@ export default function SettingsPage() {
                 if (data) {
                     setProfile({
                         full_name: data.full_name || '',
-                        studio_name: data.studio_name || ''
+                        studio_name: data.studio_name || '',
+                        phone: data.phone || ''
                     });
                 }
             } catch (err) {
@@ -62,6 +64,7 @@ export default function SettingsPage() {
                     id: user.id,
                     full_name: profile.full_name,
                     studio_name: profile.studio_name,
+                    phone: profile.phone,
                     updated_at: new Date().toISOString()
                 });
 
@@ -151,6 +154,16 @@ export default function SettingsPage() {
                                 value={profile.studio_name}
                                 onChange={(e) => setProfile({ ...profile, studio_name: e.target.value })}
                                 placeholder="Örn: Vega Medya"
+                                style={{ width: '100%', padding: '12px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-main)', fontSize: '1rem' }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Telefon Numarası</label>
+                            <input
+                                type="tel"
+                                value={profile.phone}
+                                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                                placeholder="05xx xxx xx xx"
                                 style={{ width: '100%', padding: '12px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-main)', fontSize: '1rem' }}
                             />
                         </div>
