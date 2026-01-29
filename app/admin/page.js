@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import StatusBadge from '@/components/StatusBadge';
-import { ExternalLink, Save, Loader2, LogOut, Check, Search } from 'lucide-react';
+import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2 } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
@@ -96,6 +96,27 @@ export default function AdminDashboard() {
         } catch (err) {
             console.error('Update error:', err.message);
             alert('Güncelleme hatası: ' + err.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleDeleteOrder = async (orderId) => {
+        if (!confirm('Bu siparişi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
+
+        setUpdatingId(orderId);
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .delete()
+                .eq('id', orderId);
+
+            if (error) throw error;
+
+            setOrders(orders.filter(o => o.id !== orderId));
+        } catch (err) {
+            console.error('Delete error:', err.message);
+            alert('Silme hatası: ' + err.message);
         } finally {
             setUpdatingId(null);
         }
@@ -238,8 +259,7 @@ export default function AdminDashboard() {
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            <option value="Beklemede">Beklemede</option>
-                                            <option value="Dosya İndirildi">Dosya İndirildi</option>
+                                            <option value="Ödeme Bekleniyor">Ödeme Bekleniyor</option>
                                             <option value="Kurguda">Kurguda</option>
                                             <option value="Revize Ediliyor">Revize Ediliyor</option>
                                             <option value="Tamamlandı">Tamamlandı</option>
@@ -269,12 +289,23 @@ export default function AdminDashboard() {
                                     <td style={{ padding: '16px' }}>
                                         {updatingId === order.id ? (
                                             <Loader2 className="animate-spin" size={18} color="var(--primary)" />
-                                        ) : saveStatus[order.id] === 'success' ? (
-                                            <span style={{ color: '#4ade80', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                                                <Check size={16} /> Kaydedildi
-                                            </span>
                                         ) : (
-                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Otomatik Kayıt</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                {saveStatus[order.id] === 'success' ? (
+                                                    <span style={{ color: '#4ade80', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
+                                                        <Check size={16} />
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Kayıtlı</span>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDeleteOrder(order.id)}
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '5px' }}
+                                                    title="Siparişi Sil"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>

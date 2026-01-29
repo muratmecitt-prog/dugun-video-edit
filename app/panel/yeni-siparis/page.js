@@ -78,7 +78,7 @@ function NewOrderForm() {
                         package: formData.package,
                         wt_link: formData.wt_link,
                         notes: formData.notes,
-                        status: 'Beklemede'
+                        status: 'Ödeme Bekleniyor'
                     }
                 ])
                 .select();

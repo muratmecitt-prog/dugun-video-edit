@@ -1,13 +1,13 @@
 export default function StatusBadge({ status }) {
     const styles = {
-        'Bekleniyor': { bg: 'rgba(255,255,255,0.1)', color: '#d4d4d4' },
-        'Dosya İndirildi': { bg: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8' }, // Sky Blue
+        'Ödeme Bekleniyor': { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }, // Red (Attention)
         'Kurguda': { bg: 'rgba(234, 179, 8, 0.1)', color: '#eab308' }, // Yellow
-        'Teslime Hazır': { bg: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }, // Purple
+        'Revize Ediliyor': { bg: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }, // Purple
         'Tamamlandı': { bg: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }, // Green
+        'Beklemede': { bg: 'rgba(255,255,255,0.1)', color: '#d4d4d4' },
     };
 
-    const currentStyle = styles[status] || styles['Bekleniyor'];
+    const currentStyle = styles[status] || styles['Beklemede'];
 
     return (
         <span style={{
