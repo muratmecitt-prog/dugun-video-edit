@@ -436,6 +436,22 @@ export default function AdminDashboard() {
 
                         <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '25px' }}>
 
+                            {/* Customer Identity Section */}
+                            <div style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.05)', padding: '15px', borderRadius: 'var(--radius)', border: '1px dashed var(--border)' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Stüdyo / Çift</div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{viewingRevision.studio_name}</div>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{viewingRevision.couple_name}</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>İletişim</div>
+                                        <div style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '5px' }}>📞 {viewingRevision.phone}</div>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{viewingRevision.email}</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* NEW Structured Revision Items */}
                             {viewingRevision.revision_items && viewingRevision.revision_items.length > 0 && (
                                 <div>
