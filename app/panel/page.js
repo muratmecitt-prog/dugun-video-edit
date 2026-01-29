@@ -175,6 +175,15 @@ export default function UserDashboard() {
         ? searchFiltered
         : searchFiltered.filter(o => o.status === activeTab);
 
+    const getRevisionRemainingDays = (completedAt) => {
+        if (!completedAt) return 7; // New default
+        const completedDate = new Date(completedAt);
+        const now = new Date();
+        const diffTime = (completedDate.getTime() + 7 * 24 * 60 * 60 * 1000) - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays > 0 ? diffDays : 0;
+    };
+
     return (
         <div className="container section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
@@ -299,7 +308,15 @@ export default function UserDashboard() {
                                                         </a>
                                                     )}
                                                     <button
-                                                        onClick={() => setRevisionOrder(order)}
+                                                        onClick={() => {
+                                                            const daysLeft = getRevisionRemainingDays(order.completed_at);
+                                                            if (daysLeft > 0) {
+                                                                setRevisionOrder(order);
+                                                            } else {
+                                                                showToast('Sipariş tamamlanma üzerinden 7 gün geçtiği için revize süresi dolmuştur.', 'error');
+                                                            }
+                                                        }}
+                                                        disabled={getRevisionRemainingDays(order.completed_at) <= 0}
                                                         className="btn btn-outline"
                                                         style={{
                                                             padding: '8px 16px',
@@ -307,12 +324,15 @@ export default function UserDashboard() {
                                                             display: 'inline-flex',
                                                             alignItems: 'center',
                                                             gap: '8px',
-                                                            borderColor: '#a855f7',
-                                                            color: '#a855f7'
+                                                            borderColor: getRevisionRemainingDays(order.completed_at) > 0 ? '#a855f7' : 'var(--border)',
+                                                            color: getRevisionRemainingDays(order.completed_at) > 0 ? '#a855f7' : 'var(--text-muted)',
+                                                            opacity: getRevisionRemainingDays(order.completed_at) > 0 ? 1 : 0.6
                                                         }}
                                                     >
                                                         <Edit3 size={16} />
-                                                        Revize İste
+                                                        {getRevisionRemainingDays(order.completed_at) > 0
+                                                            ? `Revize İste (${getRevisionRemainingDays(order.completed_at)} Gün)`
+                                                            : 'Süre Doldu'}
                                                     </button>
                                                 </>
                                             )}

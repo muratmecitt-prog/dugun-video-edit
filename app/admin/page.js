@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { useToast } from '@/components/Toast';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
 import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Youtube, Link as LinkIcon } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
+    const { showToast } = useToast();
     const router = useRouter();
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -83,17 +85,28 @@ export default function AdminDashboard() {
     const handleUpdateOrder = async (orderId, updates) => {
         setUpdatingId(orderId);
         try {
+            const updatePayload = {
+                ...updates,
+                updated_at: new Date().toISOString()
+            };
+
+            // If status is becoming 'Tamamlandı', set completed_at
+            if (updates.status === 'Tamamlandı') {
+                updatePayload.completed_at = new Date().toISOString();
+            }
+
             const { error } = await supabase
                 .from('orders')
-                .update(updates)
+                .update(updatePayload)
                 .eq('id', orderId);
 
             if (error) throw error;
 
             // Update local state
-            setOrders(orders.map(o => o.id === orderId ? { ...o, ...updates } : o));
+            setOrders(orders.map(o => o.id === orderId ? { ...o, ...updatePayload } : o));
 
             // Show success briefly
+            showToast('Sipariş başarıyla güncellendi.', 'success');
             setSaveStatus({ ...saveStatus, [orderId]: 'success' });
             setTimeout(() => {
                 setSaveStatus(prev => ({ ...prev, [orderId]: null }));
@@ -101,7 +114,7 @@ export default function AdminDashboard() {
 
         } catch (err) {
             console.error('Update error:', err.message);
-            alert('Güncelleme hatası: ' + err.message);
+            showToast('Güncelleme hatası: ' + err.message, 'error');
         } finally {
             setUpdatingId(null);
         }
@@ -119,10 +132,11 @@ export default function AdminDashboard() {
 
             if (error) throw error;
 
+            showToast('Sipariş silindi.', 'success');
             setOrders(orders.filter(o => o.id !== orderId));
         } catch (err) {
             console.error('Delete error:', err.message);
-            alert('Silme hatası: ' + err.message);
+            showToast('Silme hatası: ' + err.message, 'error');
         } finally {
             setUpdatingId(null);
         }
