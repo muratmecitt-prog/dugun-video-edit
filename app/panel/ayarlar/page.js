@@ -139,6 +139,15 @@ export default function SettingsPage() {
 
                     <form onSubmit={handleProfileUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>E-posta Adresi (Değiştirilemez)</label>
+                            <input
+                                type="text"
+                                value={user?.email || ''}
+                                disabled
+                                style={{ width: '100%', padding: '12px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-secondary)', fontSize: '1rem', cursor: 'not-allowed' }}
+                            />
+                        </div>
+                        <div>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Ad Soyad</label>
                             <input
                                 type="text"
