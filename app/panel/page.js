@@ -12,6 +12,7 @@ export default function UserDashboard() {
     const [searchTerm, setSearchTerm] = useState('');
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('Hepsi');
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -35,13 +36,25 @@ export default function UserDashboard() {
         fetchOrders();
     }, [user]);
 
-    // Filter logic for search
-    const filteredOrders = orders.filter(order =>
+    // Calculate counts for tabs
+    const counts = {
+        'Hepsi': orders.length,
+        'Ödeme Bekleniyor': orders.filter(o => o.status === 'Ödeme Bekleniyor').length,
+        'Kurguda': orders.filter(o => o.status === 'Kurguda').length,
+        'Revize Ediliyor': orders.filter(o => o.status === 'Revize Ediliyor').length,
+        'Tamamlandı': orders.filter(o => o.status === 'Tamamlandı').length,
+    };
+
+    const searchFiltered = orders.filter(order =>
         (order.couple_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (order.shoot_date || '').includes(searchTerm) ||
         (order.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (order.studio_name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const finalOrders = activeTab === 'Hepsi'
+        ? searchFiltered
+        : searchFiltered.filter(o => o.status === activeTab);
 
     return (
         <div className="container section">
@@ -73,6 +86,42 @@ export default function UserDashboard() {
                 />
             </div>
 
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', overflowX: 'auto', paddingBottom: '5px' }}>
+                {Object.keys(counts).map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        style={{
+                            padding: '10px 20px',
+                            borderRadius: '30px',
+                            border: '1px solid var(--border)',
+                            backgroundColor: activeTab === tab ? 'var(--primary)' : 'var(--surface)',
+                            color: activeTab === tab ? 'white' : 'var(--text-main)',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s',
+                            boxShadow: activeTab === tab ? '0 4px 12px rgba(var(--primary-rgb), 0.3)' : 'none'
+                        }}
+                    >
+                        {tab}
+                        <span style={{
+                            backgroundColor: activeTab === tab ? 'rgba(255,255,255,0.2)' : 'var(--background)',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '0.75rem'
+                        }}>
+                            {counts[tab]}
+                        </span>
+                    </button>
+                ))}
+            </div>
+
             <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                     <thead>
@@ -95,8 +144,8 @@ export default function UserDashboard() {
                                     </div>
                                 </td>
                             </tr>
-                        ) : filteredOrders.length > 0 ? (
-                            filteredOrders.map((order) => (
+                        ) : finalOrders.length > 0 ? (
+                            finalOrders.map((order) => (
                                 <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                                     <td style={{ padding: '16px', fontWeight: 'bold', color: 'var(--primary)' }}>{order.id}</td>
                                     <td style={{ padding: '16px' }}>
