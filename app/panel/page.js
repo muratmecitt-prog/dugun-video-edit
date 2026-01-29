@@ -6,9 +6,11 @@ import { Plus, Search, Download, Loader2, Edit3, X, Image as ImageIcon, Link as 
 import BankDetails from '@/components/BankDetails';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { useToast } from '@/components/Toast';
 
 export default function UserDashboard() {
     const { user } = useAuth();
+    const { showToast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -76,7 +78,7 @@ export default function UserDashboard() {
     const handleRevisionSubmit = async (e) => {
         e.preventDefault();
         if (revisionItems.length === 0) {
-            alert('Lütfen en az bir revize maddesi ekleyin.');
+            showToast('Lütfen en az bir revize maddesi ekleyin.', 'error');
             return;
         }
 
@@ -92,7 +94,7 @@ export default function UserDashboard() {
                 // Handle image upload if it's a new file
                 if (item.type === 'image' && item.file) {
                     if (item.file.size > 2 * 1024 * 1024) {
-                        alert(`${item.file.name} boyutu 2MB'den büyük olduğu için atlandı.`);
+                        showToast(`${item.file.name} boyutu 2MB'den büyük olduğu için atlandı.`, 'error');
                         setUploading(false);
                         setIsRevising(false);
                         return; // Stop submission if a file is too large
@@ -136,12 +138,17 @@ export default function UserDashboard() {
 
             if (updateError) throw updateError;
 
-            alert('Revize talebiniz başarıyla iletildi.');
+            showToast('Revize talebiniz başarıyla iletildi.', 'success');
             setRevisionOrder(null);
             fetchOrders();
         } catch (err) {
             console.error('Revision error:', err.message);
-            alert('Hata: ' + err.message);
+
+            if (err.message.includes('Bucket not found')) {
+                showToast('Hata: Supabase Storage üzerinde "revisions" kutusu bulunamadı. Lütfen admin paneline girerek Storage kısmından "revisions" adında bir kutu oluşturun ve Public yapın.', 'error');
+            } else {
+                showToast('Hata: ' + err.message, 'error');
+            }
         } finally {
             setIsRevising(false);
             setUploading(false);
