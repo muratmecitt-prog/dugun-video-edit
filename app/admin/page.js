@@ -59,8 +59,8 @@ export default function AdminDashboard() {
                     ...order,
                     phone: profile?.phone || 'Yok',
                     email: profile?.email || 'Yok',
-                    // Use live studio name from profile if available, fallback to order's fixed name
-                    studio_name: profile?.studio_name || order.studio_name
+                    // Resilience: Check profile first, then order record, finally 'Bilinmiyor'
+                    studio_name: profile?.studio_name || order.studio_name || 'Bilinmiyor'
                 };
             });
 

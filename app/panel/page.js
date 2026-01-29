@@ -107,11 +107,10 @@ export default function UserDashboard() {
 
                     if (uploadError) throw uploadError;
 
-                    const { data: publicUrl } = supabase.storage
-                        .from('revisions')
-                        .getPublicUrl(fileName);
-
-                    finalValue = publicUrl.publicUrl;
+                    // Resilience: Use permanent direct public URL instead of edge-cached getPublicUrl
+                    // Format: https://[project].supabase.co/storage/v1/object/public/revisions/[fileName]
+                    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+                    finalValue = `${supabaseUrl}/storage/v1/object/public/revisions/${fileName}`;
                 } else if (item.type === 'image' && item.value && !item.file) {
                     // If it's an image item and has an existing value but no new file, keep the existing value
                     finalValue = item.value;
