@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import StatusBadge from '@/components/StatusBadge';
+import Link from 'next/link';
 import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2 } from 'lucide-react';
 
 export default function AdminDashboard() {
