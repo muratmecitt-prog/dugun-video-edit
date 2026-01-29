@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
-import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Youtube } from 'lucide-react';
+import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Youtube, Link as LinkIcon } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
@@ -420,60 +420,108 @@ export default function AdminDashboard() {
                             </button>
                         </div>
 
-                        <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                            <div>
-                                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Müşteri Talebi</h4>
-                                <div style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-                                    {viewingRevision.revision_text}
-                                </div>
-                            </div>
+                        <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '25px' }}>
 
-                            {viewingRevision.revision_link && (
+                            {/* NEW Structured Revision Items */}
+                            {viewingRevision.revision_items && viewingRevision.revision_items.length > 0 && (
                                 <div>
-                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Referans / Müzik Linki</h4>
-                                    <a
-                                        href={viewingRevision.revision_link}
-                                        target="_blank"
-                                        className="btn btn-outline"
-                                        style={{ display: 'flex', alignItems: 'center', gap: '10px', width: 'fit-content', color: 'var(--primary)' }}
-                                    >
-                                        <Youtube size={18} />
-                                        Linki Aç
-                                    </a>
+                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revize Maddeleri ({viewingRevision.revision_items.length})</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        {viewingRevision.revision_items.map((item, idx) => (
+                                            <div key={idx} style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
+                                                    {item.type === 'image' ? <ImageIcon size={16} color="var(--primary)" /> : <LinkIcon size={16} color="#a855f7" />}
+                                                    <span style={{ fontWeight: 'bold', fontSize: '0.8rem', textTransform: 'uppercase', color: item.type === 'image' ? 'var(--primary)' : '#a855f7' }}>
+                                                        {item.type === 'image' ? 'Görüntü Revizesi' : 'Müzik/Link Revizesi'}
+                                                    </span>
+                                                </div>
+
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                    {item.type === 'image' && item.value && (
+                                                        <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--surface)', maxWidth: '300px' }}>
+                                                            <img src={item.value} alt="Revision" style={{ width: '100%', display: 'block' }} />
+                                                            <div style={{ padding: '8px', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                                                                <a href={item.value} target="_blank" style={{ color: 'white', fontSize: '0.75rem', textDecoration: 'none' }}>Tam Boyut</a>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {item.type === 'link' && item.value && (
+                                                        <a href={item.value} target="_blank" className="btn btn-outline" style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '8px', color: '#a855f7', borderColor: '#a855f7' }}>
+                                                            <LinkIcon size={16} /> Linki Aç
+                                                        </a>
+                                                    )}
+
+                                                    {item.text && (
+                                                        <div style={{ fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
+                                                            {item.text}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
-                            {(viewingRevision.revision_images && viewingRevision.revision_images.length > 0) || viewingRevision.revision_image ? (
-                                <div>
-                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Ekran Görüntüleri ({viewingRevision.revision_images?.length || 1})
-                                    </h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
-                                        {/* Show multi images if exist */}
-                                        {viewingRevision.revision_images?.map((img, idx) => (
-                                            <div key={idx} style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
-                                                <img
-                                                    src={img}
-                                                    alt={`Revision screenshot ${idx + 1}`}
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                                />
-                                                <a href={img} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                            {/* BACKWARD COMPATIBILITY: Legacy Revision Data */}
+                            {!viewingRevision.revision_items?.length && (
+                                <>
+                                    {viewingRevision.revision_text && (
+                                        <div>
+                                            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Müşteri Talebi</h4>
+                                            <div style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                                                {viewingRevision.revision_text}
                                             </div>
-                                        ))}
-                                        {/* Backward compatibility for single image */}
-                                        {!viewingRevision.revision_images?.length && viewingRevision.revision_image && (
-                                            <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
-                                                <img
-                                                    src={viewingRevision.revision_image}
-                                                    alt="Revision screenshot"
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                                />
-                                                <a href={viewingRevision.revision_image} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                                        </div>
+                                    )}
+
+                                    {viewingRevision.revision_link && (
+                                        <div>
+                                            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Referans / Müzik Linki</h4>
+                                            <a
+                                                href={viewingRevision.revision_link}
+                                                target="_blank"
+                                                className="btn btn-outline"
+                                                style={{ display: 'flex', alignItems: 'center', gap: '10px', width: 'fit-content', color: 'var(--primary)' }}
+                                            >
+                                                <Youtube size={18} />
+                                                Linki Aç
+                                            </a>
+                                        </div>
+                                    )}
+
+                                    {((viewingRevision.revision_images && viewingRevision.revision_images.length > 0) || viewingRevision.revision_image) && (
+                                        <div>
+                                            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                Ekran Görüntüleri ({viewingRevision.revision_images?.length || 1})
+                                            </h4>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
+                                                {viewingRevision.revision_images?.map((img, idx) => (
+                                                    <div key={idx} style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
+                                                        <img
+                                                            src={img}
+                                                            alt={`Revision screenshot ${idx + 1}`}
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                                        />
+                                                        <a href={img} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                                                    </div>
+                                                ))}
+                                                {!viewingRevision.revision_images?.length && viewingRevision.revision_image && (
+                                                    <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
+                                                        <img
+                                                            src={viewingRevision.revision_image}
+                                                            alt="Revision screenshot"
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                                        />
+                                                        <a href={viewingRevision.revision_image} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : null}
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
 
                         <div style={{ padding: '20px', backgroundColor: 'var(--background)', borderTop: '1px solid var(--border)', textAlign: 'right' }}>

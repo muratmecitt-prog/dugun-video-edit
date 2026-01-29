@@ -14,6 +14,7 @@ export default function UserDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Hepsi');
     const [revisionOrder, setRevisionOrder] = useState(null);
+    const [revisionItems, setRevisionItems] = useState([]); // [{ type: 'image' | 'link', text: '', value: '', file: null, preview: '' }]
     const [isRevising, setIsRevising] = useState(false);
     const [uploading, setUploading] = useState(false);
 
@@ -38,31 +39,69 @@ export default function UserDashboard() {
         fetchOrders();
     }, [user]);
 
+    useEffect(() => {
+        if (revisionOrder) {
+            // Load existing items if any, otherwise start with a default one
+            setRevisionItems(revisionOrder.revision_items || []);
+        } else {
+            setRevisionItems([]);
+        }
+    }, [revisionOrder]);
+
+    const addRevisionItem = (type) => {
+        setRevisionItems([...revisionItems, { type, text: '', value: '', file: null, preview: '' }]);
+    };
+
+    const removeRevisionItem = (index) => {
+        setRevisionItems(revisionItems.filter((_, i) => i !== index));
+    };
+
+    const updateItemFile = (index, file) => {
+        const newItems = [...revisionItems];
+        newItems[index].file = file;
+        if (file) {
+            newItems[index].preview = URL.createObjectURL(file);
+        } else {
+            newItems[index].preview = ''; // Clear preview if file is removed
+        }
+        setRevisionItems(newItems);
+    };
+
+    const updateItemData = (index, field, value) => {
+        const newItems = [...revisionItems];
+        newItems[index][field] = value;
+        setRevisionItems(newItems);
+    };
+
     const handleRevisionSubmit = async (e) => {
         e.preventDefault();
+        if (revisionItems.length === 0) {
+            alert('Lütfen en az bir revize maddesi ekleyin.');
+            return;
+        }
+
         setIsRevising(true);
-        const formData = new FormData(e.target);
-        const text = formData.get('revision_text');
-        const link = formData.get('revision_link');
-        const file = formData.get('revision_image'); // This might be single if not updated, but we will use files from e.target
-        const files = e.target.revision_images.files;
-
         try {
-            let imageUrls = revisionOrder.revision_images || [];
+            const processedItems = [];
+            setUploading(true);
 
-            if (files && files.length > 0) {
-                setUploading(true);
-                for (let i = 0; i < files.length; i++) {
-                    const f = files[i];
-                    if (f.size > 2 * 1024 * 1024) {
-                        alert(`${f.name} boyutu 2MB'den büyük olduğu için atlandı.`);
-                        continue;
+            for (let i = 0; i < revisionItems.length; i++) {
+                const item = revisionItems[i];
+                let finalValue = item.value;
+
+                // Handle image upload if it's a new file
+                if (item.type === 'image' && item.file) {
+                    if (item.file.size > 2 * 1024 * 1024) {
+                        alert(`${item.file.name} boyutu 2MB'den büyük olduğu için atlandı.`);
+                        setUploading(false);
+                        setIsRevising(false);
+                        return; // Stop submission if a file is too large
                     }
-                    const fileExt = f.name.split('.').pop();
-                    const fileName = `${revisionOrder.id}_${Math.random()}.${fileExt}`;
+                    const fileExt = item.file.name.split('.').pop();
+                    const fileName = `${revisionOrder.id}_item_${i}_${Math.random()}.${fileExt}`;
                     const { error: uploadError } = await supabase.storage
                         .from('revisions')
-                        .upload(fileName, f);
+                        .upload(fileName, item.file);
 
                     if (uploadError) throw uploadError;
 
@@ -70,24 +109,34 @@ export default function UserDashboard() {
                         .from('revisions')
                         .getPublicUrl(fileName);
 
-                    imageUrls.push(publicUrl.publicUrl);
+                    finalValue = publicUrl.publicUrl;
+                } else if (item.type === 'image' && item.value && !item.file) {
+                    // If it's an image item and has an existing value but no new file, keep the existing value
+                    finalValue = item.value;
+                } else if (item.type === 'link' && !item.value) {
+                    // If it's a link item and has no value, skip it or handle as empty
+                    finalValue = '';
                 }
+
+                processedItems.push({
+                    type: item.type,
+                    text: item.text,
+                    value: finalValue
+                });
             }
 
             const { error: updateError } = await supabase
                 .from('orders')
                 .update({
-                    revision_text: text,
-                    revision_link: link,
-                    revision_images: imageUrls,
-                    status: 'Revize Ediliyor', // Auto-revert status
+                    revision_items: processedItems,
+                    status: 'Revize Ediliyor',
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', revisionOrder.id);
 
             if (updateError) throw updateError;
 
-            alert('Revize talebiniz başarıyla iletildi ve sipariş durumunuz "Revize Ediliyor" olarak güncellendi.');
+            alert('Revize talebiniz başarıyla iletildi.');
             setRevisionOrder(null);
             fetchOrders();
         } catch (err) {
@@ -293,67 +342,105 @@ export default function UserDashboard() {
             {/* Revision Modal */}
             {revisionOrder && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-                    <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '500px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                    <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', maxHeight: '90vh', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ fontWeight: 'bold' }}>Revize Talebi - #{revisionOrder.id}</h3>
+                            <h3 style={{ fontWeight: 'bold' }}>Revize Talebi Oluştur - #{revisionOrder.id}</h3>
                             <button onClick={() => setRevisionOrder(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                                 <X size={24} />
                             </button>
                         </div>
-                        <form onSubmit={handleRevisionSubmit} style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Neler Değişecek? (Detaylı yazınız)</label>
-                                <textarea
-                                    required
-                                    name="revision_text"
-                                    defaultValue={revisionOrder.revision_text}
-                                    placeholder="Örn: 01:24'teki görüntü yerine şu görüntü gelsin..."
-                                    style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius)', backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)', minHeight: '120px', fontFamily: 'inherit' }}
-                                />
-                            </div>
 
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Müzik veya Referans Linki (Varsa)</label>
-                                <div style={{ position: 'relative' }}>
-                                    <LinkIcon size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                                    <input
-                                        name="revision_link"
-                                        type="url"
-                                        defaultValue={revisionOrder.revision_link}
-                                        placeholder="YouTube veya Bulut linki"
-                                        style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: 'var(--radius)', backgroundColor: 'var(--background)', border: '1px solid var(--border)', color: 'var(--text-main)' }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Ekran Görüntüleri (Max 2MB per image)</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <input
-                                        name="revision_images"
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}
-                                    />
-                                    <ImageIcon size={20} color="var(--text-muted)" />
-                                </div>
-                                {revisionOrder.revision_images && revisionOrder.revision_images.length > 0 && (
-                                    <div style={{ marginTop: '5px', fontSize: '0.75rem', color: 'var(--primary)' }}>{revisionOrder.revision_images.length} görsel kayıtlı. Yeni seçerseniz liste güncellenir.</div>
-                                )}
-                            </div>
-
-                            <div style={{ marginTop: '10px' }}>
-                                <button type="submit" disabled={isRevising} className="btn btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                                    {isRevising ? (
-                                        <>
-                                            <Loader2 size={20} className="animate-spin" />
-                                            {uploading ? 'Görsel Yükleniyor...' : 'Gönderiliyor...'}
-                                        </>
-                                    ) : 'Revize Talebini İlet'}
+                        <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
+                                <button type="button" onClick={() => addRevisionItem('image')} className="btn btn-outline" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: 'var(--primary)', color: 'var(--primary)' }}>
+                                    <ImageIcon size={18} /> Görüntü Revizesi Ekle
+                                </button>
+                                <button type="button" onClick={() => addRevisionItem('link')} className="btn btn-outline" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: '#a855f7', color: '#a855f7' }}>
+                                    <LinkIcon size={18} /> Müzik/Link Revizesi Ekle
                                 </button>
                             </div>
-                        </form>
+
+                            {revisionItems.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', border: '2px dashed var(--border)', borderRadius: 'var(--radius)' }}>
+                                    Henüz madde eklenmedi. Yukarıdaki butonlarla başlayın.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    {revisionItems.map((item, index) => (
+                                        <div key={index} style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', position: 'relative' }}>
+                                            <button
+                                                onClick={() => removeRevisionItem(index)}
+                                                style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                            >
+                                                <X size={18} />
+                                            </button>
+
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                                                {item.type === 'image' ? <ImageIcon size={16} color="var(--primary)" /> : <LinkIcon size={16} color="#a855f7" />}
+                                                <span style={{ fontWeight: 'bold', fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                                                    {item.type === 'image' ? 'Görüntü Revizesi' : 'Müzik/Link Revizesi'}
+                                                </span>
+                                            </div>
+
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                {item.type === 'image' ? (
+                                                    <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                                                        <div style={{ flex: 1 }}>
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                onChange={(e) => updateItemFile(index, e.target.files[0])}
+                                                                style={{ fontSize: '0.8rem' }}
+                                                            />
+                                                            {item.value && !item.file && (
+                                                                <div style={{ marginTop: '5px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Mevcut görsel sistemde.</div>
+                                                            )}
+                                                        </div>
+                                                        {item.preview && (
+                                                            <img src={item.preview} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                                        )}
+                                                        {item.value && !item.preview && !item.file && (
+                                                            <img src={item.value} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <input
+                                                        type="url"
+                                                        placeholder="YouTube veya Bulut Linki"
+                                                        value={item.value}
+                                                        onChange={(e) => updateItemData(index, 'value', e.target.value)}
+                                                        style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius)', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-main)', fontSize: '0.9rem' }}
+                                                    />
+                                                )}
+
+                                                <textarea
+                                                    placeholder="Detaylı notunuzu buraya yazın..."
+                                                    value={item.text}
+                                                    onChange={(e) => updateItemData(index, 'text', e.target.value)}
+                                                    style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius)', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-main)', fontSize: '0.9rem', minHeight: '80px', fontFamily: 'inherit' }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ padding: '20px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--surface)' }}>
+                            <button
+                                onClick={handleRevisionSubmit}
+                                disabled={isRevising || revisionItems.length === 0}
+                                className="btn btn-primary"
+                                style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                            >
+                                {isRevising ? (
+                                    <>
+                                        <Loader2 size={20} className="animate-spin" />
+                                        {uploading ? 'Dosyalar Yükleniyor...' : 'Gönderiliyor...'}
+                                    </>
+                                ) : 'Tüm Revizeleri Gönder'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
