@@ -59,7 +59,10 @@ export default function RegisterPage() {
                         updated_at: new Date().toISOString()
                     });
 
-                if (profileError) console.error('Profile save error:', profileError.message);
+                if (profileError) {
+                    console.error('Profile save error:', profileError.message);
+                    throw new Error('Profil bilgileri kaydedilemedi: ' + profileError.message);
+                }
             }
 
             // Direct redirect to panel after successful signup and profile creation

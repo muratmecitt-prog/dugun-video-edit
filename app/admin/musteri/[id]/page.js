@@ -73,6 +73,7 @@ export default function CustomerDetailPage({ params }) {
         return (
             <div className="container section" style={{ textAlign: 'center', padding: '100px 20px' }}>
                 <h1 style={{ color: '#ef4444' }}>⚠️ Müşteri Bulunamadı</h1>
+                {error && <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>Hata: {error}</p>}
                 <Link href="/admin" className="btn btn-outline" style={{ marginTop: '20px' }}>Admin Paneline Dön</Link>
             </div>
         );

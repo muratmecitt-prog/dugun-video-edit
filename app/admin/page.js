@@ -38,7 +38,7 @@ export default function AdminDashboard() {
         setError(null);
         try {
             // Fetch orders
-            const { data: ordersData, fetchError } = await supabase
+            const { data: ordersData, error: fetchError } = await supabase
                 .from('orders')
                 .select('*')
                 .order('created_at', { ascending: false });
