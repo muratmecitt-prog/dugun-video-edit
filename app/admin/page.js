@@ -312,7 +312,7 @@ export default function AdminDashboard() {
                                     <td style={{ padding: '16px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                             <div style={{ fontWeight: '500', color: 'var(--text-main)' }}>{order.couple_name}</div>
-                                            {order.revision_text && (
+                                            {(order.revision_text || (order.revision_items && order.revision_items.length > 0)) && (
                                                 <button
                                                     onClick={() => setViewingRevision(order)}
                                                     style={{
