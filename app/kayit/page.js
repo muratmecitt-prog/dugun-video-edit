@@ -62,8 +62,8 @@ export default function RegisterPage() {
                 if (profileError) console.error('Profile save error:', profileError.message);
             }
 
-            setSuccess('Kayıt başarılı! Lütfen giriş yapın (E-posta doğrulama gerekebilir).');
-            setTimeout(() => router.push('/giris'), 3000);
+            // Direct redirect to panel after successful signup and profile creation
+            router.push('/panel');
 
         } catch (err) {
             setError(translateError(err.message));

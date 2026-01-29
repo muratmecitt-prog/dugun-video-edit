@@ -177,19 +177,43 @@ function NewOrderForm() {
                         </div>
 
                         <div>
-                            <label className="form-label">Paket Seçimi</label>
-                            <select
-                                name="package"
-                                value={formData.package}
-                                onChange={handleChange}
-                                className="form-input"
-                                style={{ appearance: 'none' }}
-                            >
-                                <option>PAKET 1 — Teaser (2.000 TL)</option>
-                                <option>PAKET 2 — Düğün Klibi (4.000 TL)</option>
-                                <option>PAKET 3 — Teaser + Düğün Klibi (5.000 TL)</option>
-                                <option>PAKET 4 — Düğün Belgeseli (7.000 TL)</option>
-                            </select>
+                            <label className="form-label" style={{ marginBottom: '15px' }}>Paket Seçimi</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                {[
+                                    'PAKET 1 — Teaser (2.000 TL)',
+                                    'PAKET 2 — Düğün Klibi (4.000 TL)',
+                                    'PAKET 3 — Teaser + Düğün Klibi (5.000 TL)',
+                                    'PAKET 4 — Düğün Belgeseli (7.000 TL)'
+                                ].map((pkg) => (
+                                    <button
+                                        key={pkg}
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, package: pkg }))}
+                                        style={{
+                                            padding: '20px',
+                                            borderRadius: 'var(--radius)',
+                                            border: '2px solid',
+                                            borderColor: formData.package === pkg ? 'var(--primary)' : 'var(--border)',
+                                            backgroundColor: formData.package === pkg ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--background)',
+                                            color: formData.package === pkg ? 'var(--primary)' : 'var(--text-main)',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            transition: 'all 0.2s',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px'
+                                        }}
+                                    >
+                                        <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{pkg.split(' — ')[0]}</div>
+                                        <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>{pkg.split(' — ')[1]}</div>
+                                        {formData.package === pkg && (
+                                            <div style={{ alignSelf: 'flex-end', marginTop: '-5px' }}>
+                                                <CheckCircle2 size={18} />
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         <div>
