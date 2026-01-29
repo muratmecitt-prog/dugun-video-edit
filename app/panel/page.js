@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, Search, Download, Loader2, Edit3, X, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
+import { Plus, Search, Download, Loader2, Edit3, X, Image as ImageIcon, Link as LinkIcon, Info, AlertCircle } from 'lucide-react';
 import BankDetails from '@/components/BankDetails';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -351,14 +351,75 @@ export default function UserDashboard() {
                         </div>
 
                         <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
+                            {/* Policy Reminder */}
+                            <div style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.05)', border: '1px solid rgba(var(--primary-rgb), 0.2)', borderRadius: 'var(--radius)', padding: '15px', marginBottom: '25px', display: 'flex', gap: '12px' }}>
+                                <Info size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <div style={{ fontSize: '0.85rem', lineHeight: '1.5', color: 'var(--text-secondary)' }}>
+                                    <strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '4px' }}>Revize Politikamız:</strong>
+                                    • Görüntülerde sadece saniyeler arası değişim veya çıkar-ekle yapılabilir (Max 5 adet).<br />
+                                    • Müzik değişimi kurgu akışını değiştirmeden sadece ses dosyası bazlı yapılır.<br />
+                                    • Daha büyük kurgu değişiklikleri ek ücrete tabi olabilir.
+                                </div>
+                            </div>
+
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
-                                <button type="button" onClick={() => addRevisionItem('image')} className="btn btn-outline" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: 'var(--primary)', color: 'var(--primary)' }}>
-                                    <ImageIcon size={18} /> Görüntü Revizesi Ekle
+                                <button
+                                    type="button"
+                                    disabled={revisionItems.filter(i => i.type === 'image').length >= 5}
+                                    onClick={() => addRevisionItem('image')}
+                                    className="btn btn-outline"
+                                    style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '4px',
+                                        borderColor: 'var(--primary)',
+                                        color: 'var(--primary)',
+                                        opacity: revisionItems.filter(i => i.type === 'image').length >= 5 ? 0.5 : 1,
+                                        padding: '12px'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <ImageIcon size={18} /> Görüntü Revizesi
+                                    </div>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.8 }}>
+                                        ({5 - revisionItems.filter(i => i.type === 'image').length} Hak Kaldı)
+                                    </span>
                                 </button>
-                                <button type="button" onClick={() => addRevisionItem('link')} className="btn btn-outline" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderColor: '#a855f7', color: '#a855f7' }}>
-                                    <LinkIcon size={18} /> Müzik/Link Revizesi Ekle
+                                <button
+                                    type="button"
+                                    disabled={revisionItems.filter(i => i.type === 'link').length >= 1}
+                                    onClick={() => addRevisionItem('link')}
+                                    className="btn btn-outline"
+                                    style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '4px',
+                                        borderColor: '#a855f7',
+                                        color: '#a855f7',
+                                        opacity: revisionItems.filter(i => i.type === 'link').length >= 1 ? 0.5 : 1,
+                                        padding: '12px'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <LinkIcon size={18} /> Müzik/Link Revizesi
+                                    </div>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.8 }}>
+                                        ({1 - revisionItems.filter(i => i.type === 'link').length} Hak Kaldı)
+                                    </span>
                                 </button>
                             </div>
+
+                            {revisionItems.filter(i => i.type === 'image').length >= 5 && (
+                                <div style={{ color: '#ef4444', fontSize: '0.75rem', textAlign: 'center', marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                    <AlertCircle size={14} /> Görüntü revize limitine ulaştınız.
+                                </div>
+                            )}
 
                             {revisionItems.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', border: '2px dashed var(--border)', borderRadius: 'var(--radius)' }}>
