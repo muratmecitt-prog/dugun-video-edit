@@ -282,8 +282,15 @@ export default function AdminDashboard() {
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(order.created_at).toLocaleDateString('tr-TR')}</div>
                                     </td>
                                     <td style={{ padding: '16px' }}>
-                                        <div style={{ fontWeight: '500', color: 'var(--text-main)' }}>{order.studio_name}</div>
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{order.email}</div>
+                                        <Link
+                                            href={`/admin/musteri/${order.user_id}`}
+                                            style={{ display: 'block', textDecoration: 'none', transition: 'opacity 0.2s' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
+                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                        >
+                                            <div style={{ fontWeight: '500', color: 'var(--text-main)', borderBottom: '1px solid transparent' }}>{order.studio_name}</div>
+                                            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{order.email}</div>
+                                        </Link>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '4px' }}>📞 {order.phone}</div>
                                     </td>
                                     <td style={{ padding: '16px' }}>
