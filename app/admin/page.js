@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
-import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2 } from 'lucide-react';
+import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Youtube } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
     const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
+    const [viewingRevision, setViewingRevision] = useState(null);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('Hepsi');
@@ -295,7 +296,31 @@ export default function AdminDashboard() {
                                         <div style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '4px' }}>📞 {order.phone}</div>
                                     </td>
                                     <td style={{ padding: '16px' }}>
-                                        <div style={{ fontWeight: '500' }}>{order.couple_name}</div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <div style={{ fontWeight: '500', color: 'var(--text-main)' }}>{order.couple_name}</div>
+                                            {order.revision_text && (
+                                                <button
+                                                    onClick={() => setViewingRevision(order)}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        fontSize: '0.75rem',
+                                                        color: '#a855f7',
+                                                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                                        padding: '4px 8px',
+                                                        borderRadius: '4px',
+                                                        border: '1px solid rgba(168, 85, 247, 0.2)',
+                                                        cursor: 'pointer',
+                                                        width: 'fit-content',
+                                                        marginTop: '4px'
+                                                    }}
+                                                >
+                                                    <StickyNote size={12} />
+                                                    Revize Notu Var
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                     <td style={{ padding: '16px' }}>
                                         <span style={{ fontSize: '0.85rem' }}>{order.package.split('—')[1] || order.package}</span>
@@ -381,6 +406,70 @@ export default function AdminDashboard() {
                     </tbody>
                 </table>
             </div>
+            {/* Revision Viewer Modal */}
+            {viewingRevision && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+                    <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(168, 85, 247, 0.1)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <MessageSquare color="#a855f7" />
+                                <h3 style={{ fontWeight: 'bold' }}>Revize Detayları - #{viewingRevision.id}</h3>
+                            </div>
+                            <button onClick={() => setViewingRevision(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                            <div>
+                                <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Müşteri Talebi</h4>
+                                <div style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                                    {viewingRevision.revision_text}
+                                </div>
+                            </div>
+
+                            {viewingRevision.revision_link && (
+                                <div>
+                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Referans / Müzik Linki</h4>
+                                    <a
+                                        href={viewingRevision.revision_link}
+                                        target="_blank"
+                                        className="btn btn-outline"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '10px', width: 'fit-content', color: 'var(--primary)' }}
+                                    >
+                                        <Youtube size={18} />
+                                        Linki Aç
+                                    </a>
+                                </div>
+                            )}
+
+                            {viewingRevision.revision_image && (
+                                <div>
+                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ekran Görüntüsü</h4>
+                                    <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)' }}>
+                                        <img
+                                            src={viewingRevision.revision_image}
+                                            alt="Revision screenshot"
+                                            style={{ width: '100%', display: 'block' }}
+                                        />
+                                        <div style={{ padding: '12px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
+                                            <a href={viewingRevision.revision_image} target="_blank" style={{ fontSize: '0.85rem', color: 'var(--primary)', textDecoration: 'none' }}>Tam Boyut Görüntüle</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ padding: '20px', backgroundColor: 'var(--background)', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
+                            <button onClick={() => setViewingRevision(null)} className="btn btn-primary">Anladım</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style jsx>{`
+                .container { max-width: 1400px; margin: 0 auto; }
+            `}</style>
         </div>
     );
 }
