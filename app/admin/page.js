@@ -15,6 +15,7 @@ export default function AdminDashboard() {
     const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('Hepsi');
 
     // Security Check: Only allow if email matches owner
     useEffect(() => {
@@ -125,7 +126,16 @@ export default function AdminDashboard() {
         }
     };
 
-    const filteredOrders = orders.filter(order => {
+    // Calculate counts for tabs
+    const counts = {
+        'Hepsi': orders.length,
+        'Ödeme Bekleniyor': orders.filter(o => o.status === 'Ödeme Bekleniyor').length,
+        'Kurguda': orders.filter(o => o.status === 'Kurguda').length,
+        'Revize Ediliyor': orders.filter(o => o.status === 'Revize Ediliyor').length,
+        'Tamamlandı': orders.filter(o => o.status === 'Tamamlandı').length,
+    };
+
+    const searchFiltered = orders.filter(order => {
         const searchStr = searchTerm.toLowerCase();
         return (
             order.id.toLowerCase().includes(searchStr) ||
@@ -135,6 +145,10 @@ export default function AdminDashboard() {
             (order.email || '').toLowerCase().includes(searchStr)
         );
     });
+
+    const finalOrders = activeTab === 'Hepsi'
+        ? searchFiltered
+        : searchFiltered.filter(o => o.status === activeTab);
 
     if (isLoading) {
         return (
@@ -201,6 +215,42 @@ export default function AdminDashboard() {
                 />
             </div>
 
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', overflowX: 'auto', paddingBottom: '5px' }}>
+                {Object.keys(counts).map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        style={{
+                            padding: '10px 20px',
+                            borderRadius: '30px',
+                            border: '1px solid var(--border)',
+                            backgroundColor: activeTab === tab ? 'var(--primary)' : 'var(--surface)',
+                            color: activeTab === tab ? 'white' : 'var(--text-main)',
+                            fontSize: '0.9rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s',
+                            boxShadow: activeTab === tab ? '0 4px 12px rgba(var(--primary-rgb), 0.3)' : 'none'
+                        }}
+                    >
+                        {tab}
+                        <span style={{
+                            backgroundColor: activeTab === tab ? 'rgba(255,255,255,0.2)' : 'var(--background)',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '0.75rem'
+                        }}>
+                            {counts[tab]}
+                        </span>
+                    </button>
+                ))}
+            </div>
+
             {error && (
                 <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '30px' }}>
                     <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>Bağlantı Hatası:</h3>
@@ -224,8 +274,8 @@ export default function AdminDashboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredOrders.length > 0 ? (
-                            filteredOrders.map((order) => (
+                        {finalOrders.length > 0 ? (
+                            finalOrders.map((order) => (
                                 <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                                     <td style={{ padding: '16px' }}>
                                         <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{order.id}</div>
