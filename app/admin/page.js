@@ -18,8 +18,12 @@ export default function AdminDashboard() {
 
     // Security Check: Only allow if email matches owner
     useEffect(() => {
+        if (isLoading) return;
+
+        // ONLY redirect if we HAVE a user but they are NOT an admin
+        // If user is null (signing out), let AuthProvider handle the redirect to home
         const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
-        if (!isLoading && (!user || !isAdmin)) {
+        if (user && !isAdmin) {
             router.push('/panel');
         }
     }, [user, isLoading, router]);
@@ -117,9 +121,11 @@ export default function AdminDashboard() {
         );
     }
 
+    if (!user) return null; // Final safety for sign-out flicker
+
     const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
 
-    if (!user || !isAdmin) {
+    if (!isAdmin) {
         return (
             <div className="container section" style={{ textAlign: 'center', padding: '100px 20px' }}>
                 <h1 style={{ color: '#ef4444' }}>⚠️ Yetkisiz Erişim</h1>
@@ -129,8 +135,6 @@ export default function AdminDashboard() {
             </div>
         );
     }
-
-    if (!user) return null; // Final safety for sign-out flicker
 
     return (
         <div className="container section">
