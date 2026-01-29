@@ -268,3 +268,6 @@ button {
   opacity: 1;
   transform: translateY(0);
 }
+.portfolio-image:hover {
+  transform: scale(1.05);
+}

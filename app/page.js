@@ -1,3 +1,4 @@
+"use client";
 import Link from 'next/link';
 import { Clock, Tag, Film, CheckCircle } from 'lucide-react';
 
@@ -86,41 +87,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Portfolio Section */}
-      <section className="section" style={{ backgroundColor: 'var(--surface)', position: 'relative' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <h2 style={{ fontSize: '2.8rem', fontWeight: 'bold', marginBottom: '16px' }}>
-              Profesyonel <span className="text-gradient">Kurgu Örnekleri</span>
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto' }}>
-              Sinematik anlatım ve duygusal derinlikle hazırlanmış düğün hikayeleri
-            </p>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '30px'
-          }}>
-            <PortfolioItem
-              image="/portfolio-1.png"
-              title="Golden Hour Romance"
-              category="Düğün Klibi"
-            />
-            <PortfolioItem
-              image="/portfolio-2.png"
-              title="The Journey Begins"
-              category="Teaser + Klip"
-            />
-            <PortfolioItem
-              image="/portfolio-3.png"
-              title="Sacred Vows"
-              category="Düğün Belgeseli"
-            />
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="section" style={{ textAlign: 'center' }}>
@@ -172,8 +138,7 @@ function PortfolioItem({ image, title, category }) {
           objectFit: 'cover',
           transition: 'transform 0.5s ease',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        className="portfolio-image"
       />
       <div style={{
         position: 'absolute',
