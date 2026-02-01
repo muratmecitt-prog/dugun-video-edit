@@ -27,21 +27,34 @@ function NewOrderForm() {
     });
 
     const [studioName, setStudioName] = useState('');
+    const [missingInfo, setMissingInfo] = useState({ studio: false, phone: false });
 
-    // Fetch user's studio name
+    // Fetch user's studio name and phone
     useEffect(() => {
-        const fetchStudio = async () => {
+        const fetchProfile = async () => {
             if (user) {
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('studio_name')
+                    .select('studio_name, phone')
                     .eq('id', user.id)
                     .single();
 
-                if (data) setStudioName(data.studio_name);
+                if (data) {
+                    if (data.studio_name) {
+                        setStudioName(data.studio_name);
+                    } else {
+                        setMissingInfo(prev => ({ ...prev, studio: true }));
+                    }
+
+                    if (!data.phone) {
+                        setMissingInfo(prev => ({ ...prev, phone: true }));
+                    }
+
+                    // Pre-fill phone if exists? We can keeping it to the form data if we want
+                }
             }
         };
-        fetchStudio();
+        fetchProfile();
     }, [user]);
 
     // Handle package pre-selection from URL
@@ -54,7 +67,11 @@ function NewOrderForm() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'studio_input') {
+            setStudioName(value);
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -68,6 +85,24 @@ function NewOrderForm() {
         setError(null);
 
         try {
+            // 1. If profile info was missing, update it first
+            if (missingInfo.studio || missingInfo.phone) {
+                const updates = {};
+                if (missingInfo.studio) updates.studio_name = studioName;
+                if (missingInfo.phone) updates.phone = formData.phone; // Assuming we add phone to formData
+
+                if (Object.keys(updates).length > 0) {
+                    updates.updated_at = new Date().toISOString();
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update(updates)
+                        .eq('id', user.id);
+
+                    if (updateError) throw new Error('Profil güncellenemedi: ' + updateError.message);
+                }
+            }
+
+            // 2. Create the order
             const { data, error: insertError } = await supabase
                 .from('orders')
                 .insert([
@@ -96,7 +131,8 @@ function NewOrderForm() {
                 couple_name: formData.couple_name,
                 package: formData.package,
                 wt_link: formData.wt_link,
-                customer_email: user.email
+                customer_email: user.email,
+                customer_phone: missingInfo.phone ? formData.phone : 'Profilde kayıtlı' // Or fetch it
             });
 
             // Redirect after a few seconds
@@ -155,9 +191,50 @@ function NewOrderForm() {
 
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-                        {studioName && (
-                            <div style={{ backgroundColor: 'var(--background)', padding: '12px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '0.9rem' }}>
-                                🏢 <strong>Stüdyo:</strong> {studioName} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>(Profilinizden otomatik alındı)</span>
+                        {/* Smart Profile Completion: Studio Name */}
+                        {missingInfo.studio ? (
+                            <div style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.05)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--primary)', marginBottom: '10px' }}>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    ✨ Lütfen Profilinizi Tamamlayın
+                                </h3>
+                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '15px' }}>
+                                    Google hesabınızda stüdyo ismi bulunamadı. Lütfen aşağıya giriniz, profilinize kaydedilecektir.
+                                </p>
+                                <label className="form-label">Stüdyo / Firma İsmi</label>
+                                <input
+                                    required
+                                    name="studio_input"
+                                    value={studioName}
+                                    onChange={handleChange}
+                                    type="text"
+                                    placeholder="Örn: Vega Medya"
+                                    className="form-input"
+                                />
+                            </div>
+                        ) : (
+                            studioName && (
+                                <div style={{ backgroundColor: 'var(--background)', padding: '12px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '0.9rem' }}>
+                                    🏢 <strong>Stüdyo:</strong> {studioName} <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>(Profilinizden otomatik alındı)</span>
+                                </div>
+                            )
+                        )}
+
+                        {/* Smart Profile Completion: Phone */}
+                        {missingInfo.phone && (
+                            <div style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.05)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--primary)', marginBottom: '10px' }}>
+                                <label className="form-label">Telefon Numaranız</label>
+                                <input
+                                    required
+                                    name="phone"
+                                    value={formData.phone || ''} // Handle undefined
+                                    onChange={handleChange}
+                                    type="tel"
+                                    placeholder="05xx xxx xx xx"
+                                    className="form-input"
+                                />
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '5px' }}>
+                                    İletişim için gereklidir, profilinize kaydedilecektir.
+                                </p>
                             </div>
                         )}
 
