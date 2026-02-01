@@ -51,6 +51,9 @@ function NewOrderForm() {
                     }
 
                     // Pre-fill phone if exists? We can keeping it to the form data if we want
+                } else {
+                    // No profile row exists yet (common for Google Login)
+                    setMissingInfo({ studio: true, phone: true });
                 }
             }
         };
@@ -92,11 +95,11 @@ function NewOrderForm() {
                 if (missingInfo.phone) updates.phone = formData.phone; // Assuming we add phone to formData
 
                 if (Object.keys(updates).length > 0) {
+                    updates.id = user.id; // Required for upsert
                     updates.updated_at = new Date().toISOString();
                     const { error: updateError } = await supabase
                         .from('profiles')
-                        .update(updates)
-                        .eq('id', user.id);
+                        .upsert(updates);
 
                     if (updateError) throw new Error('Profil güncellenemedi: ' + updateError.message);
                 }
