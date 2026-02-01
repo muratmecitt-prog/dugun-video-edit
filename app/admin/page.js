@@ -471,20 +471,17 @@ export default function AdminDashboard() {
                                                     {item.type === 'image' && item.value && (
                                                         <div
                                                             onClick={() => setEnlargedImage(item.value)}
+                                                            title="Büyütmek için tıkla"
                                                             style={{
                                                                 borderRadius: 'var(--radius)',
                                                                 overflow: 'hidden',
                                                                 border: '1px solid var(--border)',
                                                                 backgroundColor: 'var(--surface)',
                                                                 maxWidth: '300px',
-                                                                cursor: 'zoom-in',
-                                                                position: 'relative'
+                                                                cursor: 'zoom-in'
                                                             }}
                                                         >
                                                             <img src={item.value} alt="Revision" style={{ width: '100%', display: 'block' }} />
-                                                            <div style={{ padding: '8px', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.75rem' }}>
-                                                                Büyütmek için tıkla
-                                                            </div>
                                                         </div>
                                                     )}
 
@@ -543,27 +540,27 @@ export default function AdminDashboard() {
                                                     <div
                                                         key={idx}
                                                         onClick={() => setEnlargedImage(img)}
-                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9', cursor: 'zoom-in' }}
+                                                        title="Büyütmek için tıkla"
+                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', aspectRatio: '16/9', cursor: 'zoom-in' }}
                                                     >
                                                         <img
                                                             src={img}
                                                             alt={`Revision screenshot ${idx + 1}`}
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                                         />
-                                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center' }}>Büyüt</div>
                                                     </div>
                                                 ))}
                                                 {!viewingRevision.revision_images?.length && viewingRevision.revision_image && (
                                                     <div
                                                         onClick={() => setEnlargedImage(viewingRevision.revision_image)}
-                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9', cursor: 'zoom-in' }}
+                                                        title="Büyütmek için tıkla"
+                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', aspectRatio: '16/9', cursor: 'zoom-in' }}
                                                     >
                                                         <img
                                                             src={viewingRevision.revision_image}
                                                             alt="Revision screenshot"
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                                         />
-                                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center' }}>Büyüt</div>
                                                     </div>
                                                 )}
                                             </div>
