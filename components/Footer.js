@@ -3,7 +3,7 @@ import Link from 'next/link';
 export default function Footer() {
     return (
         <footer style={{ borderTop: '1px solid var(--border)', padding: '60px 0', marginTop: 'auto', backgroundColor: 'var(--surface)' }}>
-            <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div className="container footer-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '40px' }}>
                 <div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '15px' }}>Düğün Video Edit</h3>
                     <p style={{ color: 'var(--text-secondary)', maxWidth: '300px', lineHeight: '1.6' }}>
