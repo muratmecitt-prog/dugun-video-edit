@@ -181,24 +181,3 @@ function NavLinkMobile({ href, children, onClick }) {
         </Link>
     );
 }
-color: active ? 'var(--primary)' : undefined,
-    fontWeight: active ? '600' : undefined
-        }}>
-    { children }
-        </Link >
-    );
-}
-
-function NavLinkMobile({ href, children, onClick }) {
-    return (
-        <Link href={href} onClick={onClick} style={{
-            fontSize: '1.2rem',
-            padding: '10px 0',
-            color: 'var(--text-main)',
-            borderBottom: '1px solid var(--border)',
-            width: '100%'
-        }}>
-            {children}
-        </Link>
-    );
-}
