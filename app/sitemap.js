@@ -15,10 +15,34 @@ export default function sitemap() {
             priority: 0.8,
         },
         {
+            url: `${baseUrl}/nasil-calisir`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.7,
+        },
+        {
+            url: `${baseUrl}/cekim-standartlari`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.6,
+        },
+        {
             url: `${baseUrl}/sss`,
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 0.5,
+        },
+        {
+            url: `${baseUrl}/iletisim`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        },
+        {
+            url: `${baseUrl}/revize-politikasi`,
+            lastModified: new Date(),
+            changeFrequency: 'yearly',
+            priority: 0.4,
         },
         {
             url: `${baseUrl}/giris`,
