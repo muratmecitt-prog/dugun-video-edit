@@ -1,11 +1,8 @@
-// Vercel Redeploy Trigger
-"use client";
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Inter } from 'next/font/google';
-import { AuthProvider } from '@/components/AuthProvider';
-import { ToastProvider } from '@/components/Toast';
+import { Providers } from '@/components/Providers';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -18,15 +15,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <AuthProvider>
-          <ToastProvider>
-            <Navbar />
-            <main style={{ flex: 1 }}>
-              {children}
-            </main>
-            <Footer />
-          </ToastProvider>
-        </AuthProvider>
+        <Providers>
+          <Navbar />
+          <main style={{ flex: 1 }}>
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
