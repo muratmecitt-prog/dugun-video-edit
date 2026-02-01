@@ -260,7 +260,8 @@ export default function UserDashboard() {
                 ))}
             </div>
 
-            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+            {/* Desktop Table View */}
+            <div className="desktop-table-view" style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
                     <thead>
                         <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
@@ -341,7 +342,7 @@ export default function UserDashboard() {
                                                     >
                                                         <Edit3 size={16} />
                                                         {getRevisionRemainingDays(order.completed_at) > 0
-                                                            ? `Revize İste (${getRevisionRemainingDays(order.completed_at)} Gün)`
+                                                            ? `Revize (${getRevisionRemainingDays(order.completed_at)} Gün)`
                                                             : 'Süre Doldu'}
                                                     </button>
                                                 </>
@@ -364,6 +365,85 @@ export default function UserDashboard() {
                 </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="mobile-card-view" style={{ display: 'none', flexDirection: 'column', gap: '15px' }}>
+                {isLoading ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
+                            <Loader2 className="animate-spin" size={20} />
+                            Yükleniyor...
+                        </div>
+                    </div>
+                ) : finalOrders.length > 0 ? (
+                    finalOrders.map((order) => (
+                        <div key={order.id} style={{ backgroundColor: 'var(--surface)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                                <div>
+                                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', marginBottom: '4px' }}>#{order.id}</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: '500' }}>{order.couple_name}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.studio_name}</div>
+                                </div>
+                                <StatusBadge status={order.status} />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px', fontSize: '0.85rem' }}>
+                                <div style={{ backgroundColor: 'var(--background)', padding: '8px', borderRadius: '4px' }}>
+                                    <div style={{ color: 'var(--text-secondary)', marginBottom: '2px' }}>Paket</div>
+                                    <div>{order.package.split(' — ')[0]}</div>
+                                </div>
+                                <div style={{ backgroundColor: 'var(--background)', padding: '8px', borderRadius: '4px' }}>
+                                    <div style={{ color: 'var(--text-secondary)', marginBottom: '2px' }}>Tarih</div>
+                                    <div>{new Date(order.shoot_date).toLocaleDateString('tr-TR')}</div>
+                                </div>
+                            </div>
+
+                            {order.status === 'Tamamlandı' && (
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                                    {order.download_link && (
+                                        <a
+                                            href={order.download_link}
+                                            target="_blank"
+                                            className="btn btn-outline"
+                                            style={{ flex: 1, justifyContent: 'center', padding: '10px', fontSize: '0.9rem', gap: '5px' }}
+                                        >
+                                            <Download size={16} /> İndir
+                                        </a>
+                                    )}
+                                    <button
+                                        onClick={() => {
+                                            const daysLeft = getRevisionRemainingDays(order.completed_at);
+                                            if (daysLeft > 0) {
+                                                setRevisionOrder(order);
+                                            } else {
+                                                showToast('Revize süresi dolmuştur.', 'error');
+                                            }
+                                        }}
+                                        disabled={getRevisionRemainingDays(order.completed_at) <= 0}
+                                        className="btn btn-outline"
+                                        style={{
+                                            flex: 1,
+                                            justifyContent: 'center',
+                                            padding: '10px',
+                                            fontSize: '0.9rem',
+                                            gap: '5px',
+                                            borderColor: getRevisionRemainingDays(order.completed_at) > 0 ? '#a855f7' : 'var(--border)',
+                                            color: getRevisionRemainingDays(order.completed_at) > 0 ? '#a855f7' : 'var(--text-muted)'
+                                        }}
+                                    >
+                                        <Edit3 size={16} />
+                                        Revize
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))
+                ) : (
+                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)', backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                        Henüz hiç siparişiniz bulunmuyor.
+                    </div>
+                )}
+            </div>
+
             {/* Quick Access to Bank Details */}
             <div style={{ marginTop: '60px', maxWidth: '600px' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '10px' }}>Ödeme İşlemleri</h2>
@@ -378,11 +458,11 @@ export default function UserDashboard() {
 
             {/* Revision Modal */}
             {revisionOrder && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '10px' }}>
                     <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', maxHeight: '90vh', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ fontWeight: 'bold' }}>Revize Talebi Oluştur - #{revisionOrder.id}</h3>
-                            <button onClick={() => setRevisionOrder(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Revize Talebi - #{revisionOrder.id}</h3>
+                            <button onClick={() => setRevisionOrder(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '5px' }}>
                                 <X size={24} />
                             </button>
                         </div>
@@ -418,10 +498,10 @@ export default function UserDashboard() {
                                     }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <ImageIcon size={18} /> Görüntü Revizesi
+                                        <ImageIcon size={18} /> Görüntü
                                     </div>
                                     <span style={{ fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.8 }}>
-                                        ({5 - revisionItems.filter(i => i.type === 'image').length} Hak Kaldı)
+                                        ({5 - revisionItems.filter(i => i.type === 'image').length} Hak)
                                     </span>
                                 </button>
                                 <button
@@ -443,10 +523,10 @@ export default function UserDashboard() {
                                     }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <LinkIcon size={18} /> Müzik/Link Revizesi
+                                        <LinkIcon size={18} /> Link/Müzik
                                     </div>
                                     <span style={{ fontSize: '0.7rem', fontWeight: 'bold', opacity: 0.8 }}>
-                                        ({1 - revisionItems.filter(i => i.type === 'link').length} Hak Kaldı)
+                                        ({1 - revisionItems.filter(i => i.type === 'link').length} Hak)
                                     </span>
                                 </button>
                             </div>
@@ -459,20 +539,20 @@ export default function UserDashboard() {
 
                             {revisionItems.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', border: '2px dashed var(--border)', borderRadius: 'var(--radius)' }}>
-                                    Henüz madde eklenmedi. Yukarıdaki butonlarla başlayın.
+                                    Henüz madde eklenmedi.<br />Yukarıdaki butonlarla başlayın.
                                 </div>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                     {revisionItems.map((item, index) => (
-                                        <div key={index} style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', position: 'relative' }}>
+                                        <div key={index} style={{ backgroundColor: 'var(--background)', padding: '15px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', position: 'relative' }}>
                                             <button
                                                 onClick={() => removeRevisionItem(index)}
-                                                style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                                style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '5px' }}
                                             >
                                                 <X size={18} />
                                             </button>
 
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', paddingRight: '30px' }}>
                                                 {item.type === 'image' ? <ImageIcon size={16} color="var(--primary)" /> : <LinkIcon size={16} color="#a855f7" />}
                                                 <span style={{ fontWeight: 'bold', fontSize: '0.85rem', textTransform: 'uppercase' }}>
                                                     {item.type === 'image' ? 'Görüntü Revizesi' : 'Müzik/Link Revizesi'}
@@ -481,13 +561,13 @@ export default function UserDashboard() {
 
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                 {item.type === 'image' ? (
-                                                    <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
-                                                        <div style={{ flex: 1 }}>
+                                                    <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                                                        <div style={{ flex: 1, minWidth: '200px' }}>
                                                             <input
                                                                 type="file"
                                                                 accept="image/*"
                                                                 onChange={(e) => updateItemFile(index, e.target.files[0])}
-                                                                style={{ fontSize: '0.8rem' }}
+                                                                style={{ fontSize: '0.8rem', width: '100%' }}
                                                             />
                                                             {item.value && !item.file && (
                                                                 <div style={{ marginTop: '5px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Mevcut görsel sistemde.</div>
@@ -544,6 +624,11 @@ export default function UserDashboard() {
 
             <style jsx>{`
                 .container { max-width: 1200px; margin: 0 auto; }
+                
+                @media (max-width: 768px) {
+                    .desktop-table-view { display: none !important; }
+                    .mobile-card-view { display: flex !important; }
+                }
             `}</style>
         </div>
     );
