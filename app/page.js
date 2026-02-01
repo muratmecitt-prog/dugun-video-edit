@@ -1,8 +1,10 @@
 "use client";
 import Link from 'next/link';
 import { Clock, Tag, Film, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function Home() {
+  const { user } = useAuth();
   return (
     <>
       {/* Hero Section */}
@@ -50,7 +52,7 @@ export default function Home() {
             }}>
               Paketleri İncele
             </Link>
-            <Link href="/giris" className="btn btn-outline" style={{ padding: '18px 36px', fontSize: '1.1rem' }}>
+            <Link href={user ? "/panel" : "/giris"} className="btn btn-outline" style={{ padding: '18px 36px', fontSize: '1.1rem' }}>
               Sipariş Oluştur
             </Link>
           </div>
