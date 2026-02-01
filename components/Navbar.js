@@ -1,7 +1,7 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Video, Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Video, Menu, X, User, LogOut, Settings, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 
@@ -82,6 +82,25 @@ export default function Navbar() {
                             </>
                         )}
                     </div>
+
+                    {/* WhatsApp Button */}
+                    <a
+                        href="https://wa.me/905320000000" // Placeholder number
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-outline"
+                        style={{
+                            padding: '8px 16px',
+                            fontSize: '0.85rem',
+                            gap: '8px',
+                            borderColor: '#25D366',
+                            color: '#25D366',
+                            backgroundColor: 'rgba(37, 211, 102, 0.05)'
+                        }}
+                    >
+                        <MessageCircle size={18} />
+                        WhatsApp
+                    </a>
                 </div>
 
                 {/* Mobile Hamburger */}
@@ -122,6 +141,16 @@ export default function Navbar() {
                             </Link>
                         </>
                     )}
+
+                    <a
+                        href="https://wa.me/905320000000"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-outline"
+                        style={{ width: '100%', justifyContent: 'center', borderColor: '#25D366', color: '#25D366' }}
+                    >
+                        <MessageCircle size={18} style={{ marginRight: '8px' }} /> WhatsApp Destek
+                    </a>
                 </div>
             )}
         </nav>
@@ -136,6 +165,27 @@ function NavLink({ href, children, active }) {
         }}>
             {children}
         </Link>
+    );
+}
+
+function NavLinkMobile({ href, children, onClick }) {
+    return (
+        <Link href={href} onClick={onClick} style={{
+            fontSize: '1.2rem',
+            padding: '10px 0',
+            color: 'var(--text-main)',
+            borderBottom: '1px solid var(--border)',
+            width: '100%'
+        }}>
+            {children}
+        </Link>
+    );
+}
+color: active ? 'var(--primary)' : undefined,
+    fontWeight: active ? '600' : undefined
+        }}>
+    { children }
+        </Link >
     );
 }
 

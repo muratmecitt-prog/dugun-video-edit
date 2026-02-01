@@ -50,8 +50,17 @@ export default function LoginPage() {
     };
 
     const handleGoogleLogin = async () => {
-        // Show as error/info in UI
-        setError("Google ile giriş şu an aktif değil. Lütfen E-posta ve Şifre ile giriş yapınız.");
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+            if (error) throw error;
+        } catch (err) {
+            setError('Google ile giriş hatası: ' + err.message);
+        }
     };
 
     return (

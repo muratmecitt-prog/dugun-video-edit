@@ -7,6 +7,7 @@ import BankDetails from '@/components/BankDetails';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
+import { sendNotificationEmail, templates } from '@/lib/emailService';
 
 export default function UserDashboard() {
     const { user } = useAuth();
@@ -136,6 +137,16 @@ export default function UserDashboard() {
                 .eq('id', revisionOrder.id);
 
             if (updateError) throw updateError;
+
+            // Send notification to admin about the revision
+            sendNotificationEmail(templates.ADMIN_NEW_ORDER, {
+                order_id: revisionOrder.id,
+                studio_name: revisionOrder.studio_name,
+                couple_name: revisionOrder.couple_name,
+                package: 'REVİZE TALEBİ',
+                wt_link: 'Panelden kontrol ediniz.',
+                customer_email: user.email
+            });
 
             showToast('Revize talebiniz başarıyla iletildi.', 'success');
             setRevisionOrder(null);

@@ -76,8 +76,17 @@ export default function RegisterPage() {
     };
 
     const handleGoogleLogin = async () => {
-        // Show as info/error message in UI instead of alert
-        setError("Google ile kayıt şu an aktif değil. Lütfen E-posta ve Şifre ile kayıt olunuz.");
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+            if (error) throw error;
+        } catch (err) {
+            setError('Google ile kayıt hatası: ' + err.message);
+        }
     };
 
     return (

@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import BankDetails from '@/components/BankDetails';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { sendNotificationEmail, templates } from '@/lib/emailService';
 
 function NewOrderForm() {
     const router = useRouter();
@@ -87,6 +88,16 @@ function NewOrderForm() {
 
             setOrderId(data[0].id);
             setSuccess(true);
+
+            // Send notification email to admin
+            sendNotificationEmail(templates.ADMIN_NEW_ORDER, {
+                order_id: data[0].id,
+                studio_name: studioName,
+                couple_name: formData.couple_name,
+                package: formData.package,
+                wt_link: formData.wt_link,
+                customer_email: user.email
+            });
 
             // Redirect after a few seconds
             setTimeout(() => {

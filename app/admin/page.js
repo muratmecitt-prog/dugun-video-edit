@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
+import { sendNotificationEmail, templates } from '@/lib/emailService';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
 import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Youtube, Link as LinkIcon } from 'lucide-react';
@@ -107,8 +108,21 @@ export default function AdminDashboard() {
             setOrders(orders.map(o => o.id === orderId ? { ...o, ...updatePayload } : o));
 
             // Show success briefly
+            // Informational toast
             showToast('Sipariş başarıyla güncellendi.', 'success');
             setSaveStatus({ ...saveStatus, [orderId]: 'success' });
+
+            // Send notification email to user if status changed
+            if (updates.status) {
+                const order = orders.find(o => o.id === orderId);
+                sendNotificationEmail(templates.USER_STATUS_UPDATE, {
+                    to_email: order.email,
+                    order_id: orderId,
+                    status: updates.status,
+                    download_link: updates.download_link || order.download_link || ''
+                });
+            }
+
             setTimeout(() => {
                 setSaveStatus(prev => ({ ...prev, [orderId]: null }));
             }, 3000);
