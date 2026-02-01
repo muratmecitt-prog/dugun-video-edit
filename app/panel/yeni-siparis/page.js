@@ -193,7 +193,7 @@ function NewOrderForm() {
                                 {[
                                     'PAKET 1 — Teaser (2.000 TL)',
                                     'PAKET 2 — Düğün Klibi (4.000 TL)',
-                                    'PAKET 3 — Teaser + Düğün Klibi (5.000 TL)',
+                                    'PAKET 3 — Teaser + Klip (5.000 TL)',
                                     'PAKET 4 — Düğün Belgeseli (7.000 TL)'
                                 ].map((pkg) => (
                                     <button
