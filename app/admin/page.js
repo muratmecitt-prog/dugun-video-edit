@@ -17,6 +17,7 @@ export default function AdminDashboard() {
     const [updatingId, setUpdatingId] = useState(null);
     const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
     const [viewingRevision, setViewingRevision] = useState(null);
+    const [enlargedImage, setEnlargedImage] = useState(null); // Full-page image zoom
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('Hepsi');
@@ -468,10 +469,21 @@ export default function AdminDashboard() {
 
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                     {item.type === 'image' && item.value && (
-                                                        <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--surface)', maxWidth: '300px' }}>
+                                                        <div
+                                                            onClick={() => setEnlargedImage(item.value)}
+                                                            style={{
+                                                                borderRadius: 'var(--radius)',
+                                                                overflow: 'hidden',
+                                                                border: '1px solid var(--border)',
+                                                                backgroundColor: 'var(--surface)',
+                                                                maxWidth: '300px',
+                                                                cursor: 'zoom-in',
+                                                                position: 'relative'
+                                                            }}
+                                                        >
                                                             <img src={item.value} alt="Revision" style={{ width: '100%', display: 'block' }} />
-                                                            <div style={{ padding: '8px', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                                                                <a href={item.value} target="_blank" style={{ color: 'white', fontSize: '0.75rem', textDecoration: 'none' }}>Tam Boyut</a>
+                                                            <div style={{ padding: '8px', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.75rem' }}>
+                                                                Büyütmek için tıkla
                                                             </div>
                                                         </div>
                                                     )}
@@ -528,23 +540,30 @@ export default function AdminDashboard() {
                                             </h4>
                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
                                                 {viewingRevision.revision_images?.map((img, idx) => (
-                                                    <div key={idx} style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
+                                                    <div
+                                                        key={idx}
+                                                        onClick={() => setEnlargedImage(img)}
+                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9', cursor: 'zoom-in' }}
+                                                    >
                                                         <img
                                                             src={img}
                                                             alt={`Revision screenshot ${idx + 1}`}
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                                         />
-                                                        <a href={img} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center' }}>Büyüt</div>
                                                     </div>
                                                 ))}
                                                 {!viewingRevision.revision_images?.length && viewingRevision.revision_image && (
-                                                    <div style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9' }}>
+                                                    <div
+                                                        onClick={() => setEnlargedImage(viewingRevision.revision_image)}
+                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', position: 'relative', aspectRatio: '16/9', cursor: 'zoom-in' }}
+                                                    >
                                                         <img
                                                             src={viewingRevision.revision_image}
                                                             alt="Revision screenshot"
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                                                         />
-                                                        <a href={viewingRevision.revision_image} target="_blank" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center', textDecoration: 'none' }}>Büyüt</a>
+                                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.7rem', padding: '4px', textAlign: 'center' }}>Büyüt</div>
                                                     </div>
                                                 )}
                                             </div>
@@ -558,6 +577,39 @@ export default function AdminDashboard() {
                             <button onClick={() => setViewingRevision(null)} className="btn btn-primary">Anladım</button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Image Zoom Modal (Full screen) */}
+            {enlargedImage && (
+                <div
+                    onClick={() => setEnlargedImage(null)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.9)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 2000,
+                        cursor: 'zoom-out',
+                        padding: '40px'
+                    }}
+                >
+                    <button
+                        onClick={() => setEnlargedImage(null)}
+                        style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '10px', borderRadius: '50%', cursor: 'pointer' }}
+                    >
+                        <X size={30} />
+                    </button>
+                    <img
+                        src={enlargedImage}
+                        alt="Enlarged"
+                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 0 50px rgba(0,0,0,0.5)', borderRadius: '4px' }}
+                    />
                 </div>
             )}
 
