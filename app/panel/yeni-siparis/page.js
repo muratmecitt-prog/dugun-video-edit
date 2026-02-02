@@ -416,6 +416,27 @@ function NewOrderForm() {
                                     {packages.map((pkg) => {
                                         const pkgStr = `PAKET ${pkg.display_order} — ${pkg.name} (${pkg.price} TL)`;
                                         const isSelected = formData.package === pkgStr;
+
+                                        // Calculate display price for this package
+                                        let displayPrice = pkg.price;
+                                        let originalPrice = null;
+                                        let badgeText = null;
+
+                                        if (appliedCampaign) {
+                                            originalPrice = pkg.price;
+                                            let amount = 0;
+                                            if (appliedCampaign.discount_type === 'PERCENTAGE') {
+                                                amount = (pkg.price * appliedCampaign.discount_value) / 100;
+                                            } else {
+                                                amount = appliedCampaign.discount_value;
+                                            }
+                                            displayPrice = Math.max(0, pkg.price - amount);
+
+                                            if (displayPrice < originalPrice) {
+                                                badgeText = appliedCampaign.badge_text || (appliedCampaign.discount_type === 'PERCENTAGE' ? `%${appliedCampaign.discount_value} İNDİRİM` : `-${appliedCampaign.discount_value} TL`);
+                                            }
+                                        }
+
                                         return (
                                             <button
                                                 key={pkg.id}
@@ -436,14 +457,48 @@ function NewOrderForm() {
                                                     transition: 'all 0.2s',
                                                     display: 'flex',
                                                     flexDirection: 'column',
-                                                    gap: '8px'
+                                                    gap: '8px',
+                                                    position: 'relative'
                                                 }}
                                             >
+                                                {/* Badge */}
+                                                {badgeText && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '-10px',
+                                                        right: '10px',
+                                                        backgroundColor: '#eab308',
+                                                        color: 'black',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 'bold',
+                                                        padding: '2px 10px',
+                                                        borderRadius: '12px',
+                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                                        zIndex: 2
+                                                    }}>
+                                                        {badgeText}
+                                                    </div>
+                                                )}
+
                                                 <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>PAKET {pkg.display_order}</div>
-                                                <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>{pkg.name} ({pkg.price} TL)</div>
+
+                                                <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                                                    <div>{pkg.name}</div>
+                                                    <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        {badgeText ? (
+                                                            <>
+                                                                <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '0.9em' }}>{pkg.price} TL</span>
+                                                                <span style={{ fontWeight: 'bold', color: '#16a34a', fontSize: '1.2em' }}>{displayPrice} TL</span>
+                                                            </>
+                                                        ) : (
+                                                            <span>{pkg.price} TL</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
                                                 {isSelected && (
-                                                    <div style={{ alignSelf: 'flex-end', marginTop: '-5px' }}>
-                                                        <CheckCircle2 size={18} />
+                                                    <div style={{ position: 'absolute', bottom: '20px', right: '20px' }}>
+                                                        <CheckCircle2 size={24} />
                                                     </div>
                                                 )}
                                             </button>
