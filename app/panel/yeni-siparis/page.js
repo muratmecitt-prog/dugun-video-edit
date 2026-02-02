@@ -575,8 +575,26 @@ function NewOrderForm() {
                         </div>
 
                         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginTop: '10px' }}>
+                            <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-secondary)' }}>
+                                    <span>Paket Tutarı:</span>
+                                    <span>{basePrice} TL</span>
+                                </div>
+                                {discountAmount > 0 && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#16a34a' }}>
+                                        <span>İndirim ({appliedCampaign ? appliedCampaign.name : 'Kampanya'}):</span>
+                                        <span>-{discountAmount} TL</span>
+                                    </div>
+                                )}
+                                <div style={{ borderTop: '1px dashed var(--border)', margin: '15px 0' }}></div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Ödenecek Tutar:</span>
+                                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{finalPrice} TL</span>
+                                </div>
+                            </div>
+
                             <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ width: '100%' }}>
-                                {isSubmitting ? 'Sipariş Oluşturuluyor...' : `Siparişi Tamamla (${finalPrice} TL)`}
+                                {isSubmitting ? 'Sipariş Oluşturuluyor...' : `Siparişi Tamamla`}
                             </button>
                         </div>
 
