@@ -45,43 +45,44 @@ export default function Home() {
   const [siteSettings, setSiteSettings] = useState(null);
 
   // Default values (fallback)
+  // Default values (fallback)
   const defaultScenes = [
     { id: 'hero', type: 'intro' },
     {
       id: 'fcp',
       type: 'card',
-      img: '/fcp-interface.png',
       title: 'İşinizi Büyütmeye Odaklanın',
       desc: "Siz çekin, biz kurgulayalım. Türkiye'nin profesyonelleri için\nhızlı, standart ve kaliteli video edit hizmeti.",
-      btnText: 'Hemen Başlayın'
+      btnText: 'Hemen Başlayın',
+      img: '/fcp-interface.png'
     },
     {
       id: 'step1',
       type: 'card',
-      img: '/step1_v2.png',
-      title: '1. Videolarınızı Yükleyin',
-      desc: 'Ham görüntülerinizi WeTransfer veya Google Drive ile kolayca bize gönderin.'
+      title: '1. Videolarınızı Yükle',
+      desc: 'Ham görüntülerinizi WeTransfer veya Google Drive ile kolayca bize gönderin.',
+      img: '/step1_v2.png'
     },
     {
       id: 'step2',
       type: 'card',
-      img: '/step2.png',
       title: '2. Profesyonel Kurgu',
-      desc: 'Uzman ekibimiz görüntülerinizi sinematik filme dönüştürsün.'
+      desc: 'Uzman ekibimiz görüntülerinizi sinematik filme dönüştürsün.',
+      img: '/step2.png'
     },
     {
       id: 'step3',
       type: 'card',
-      img: '/step3.png',
       title: '3. Revize Edin',
-      desc: 'Hazırlanan taslağı izleyin, panel üzerinden anlık geri bildirim verin.'
+      desc: 'Hazırlanan taslağı izleyin, panel üzerinden anlık geri bildirim verin.',
+      img: '/step3.png'
     },
     {
       id: 'step4',
       type: 'card',
-      img: '/step4_v2.png',
       title: '4. Teslim Alın',
-      desc: 'Kusursuz hale gelen videonuzu 4K kalitesinde indirin ve çiftlerinize teslim edin.'
+      desc: 'Kusursuz hale gelen videonuzu 4K kalitesinde indirin ve çiftlerinize teslim edin.',
+      img: '/step4_v2.png'
     }
   ];
 
