@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import StatusBadge from '@/components/StatusBadge';
-import { Plus, Search, Download, Loader2, Edit3, X, Image as ImageIcon, Link as LinkIcon, Info, AlertCircle, User } from 'lucide-react';
+import { Plus, Search, Download, Loader2, Edit3, X, Image as ImageIcon, Link as LinkIcon, Info, AlertCircle } from 'lucide-react';
 import BankDetails from '@/components/BankDetails';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -20,8 +20,6 @@ export default function UserDashboard() {
     const [revisionItems, setRevisionItems] = useState([]); // [{ type: 'image' | 'link', text: '', value: '', file: null, preview: '' }]
     const [isRevising, setIsRevising] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [profileData, setProfileData] = useState({ full_name: '', phone: '', studio_name: '' });
 
     const fetchOrders = async () => {
         if (!user) return;
@@ -43,6 +41,7 @@ export default function UserDashboard() {
     useEffect(() => {
         fetchOrders();
 
+        // Sync profile to ensure it exists in the database
         const syncProfile = async () => {
             if (!user) return;
 
@@ -50,7 +49,7 @@ export default function UserDashboard() {
                 // Check if profile exists
                 const { data: existingProfile, error: fetchError } = await supabase
                     .from('profiles')
-                    .select('*')
+                    .select('id')
                     .eq('id', user.id)
                     .single();
 
@@ -70,17 +69,6 @@ export default function UserDashboard() {
                         }]);
 
                     if (insertError) console.error('Error creating profile:', insertError);
-                    setProfileData({
-                        full_name: user.user_metadata?.full_name || '',
-                        phone: '',
-                        studio_name: ''
-                    });
-                } else {
-                    setProfileData({
-                        full_name: existingProfile.full_name || '',
-                        phone: existingProfile.phone || '',
-                        studio_name: existingProfile.studio_name || ''
-                    });
                 }
             } catch (err) {
                 console.error('Profile sync error:', err);
@@ -213,26 +201,7 @@ export default function UserDashboard() {
         }
     };
 
-    const handleUpdateProfile = async (e) => {
-        e.preventDefault();
-        try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    full_name: profileData.full_name,
-                    phone: profileData.phone,
-                    studio_name: profileData.studio_name,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', user.id);
 
-            if (error) throw error;
-            showToast('Profil bilgileriniz güncellendi.', 'success');
-            setIsProfileModalOpen(false);
-        } catch (err) {
-            showToast('Hata: ' + err.message, 'error');
-        }
-    };
 
     // Calculate counts for tabs
     const counts = {
@@ -267,16 +236,10 @@ export default function UserDashboard() {
         <div className="container section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Siparişlerim</h1>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => setIsProfileModalOpen(true)} className="btn btn-outline" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <User size={20} />
-                        Profilim
-                    </button>
-                    <Link href="/panel/yeni-siparis" className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <Plus size={20} />
-                        Yeni Sipariş
-                    </Link>
-                </div>
+                <Link href="/panel/yeni-siparis" className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <Plus size={20} />
+                    Yeni Sipariş
+                </Link>
             </div>
 
             {/* Search Bar */}
@@ -705,43 +668,7 @@ export default function UserDashboard() {
                     .mobile-card-view { display: flex !important; }
                 }
             `}</style>
-            {/* Profile Modal */}
-            {isProfileModalOpen && (
-                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-                    <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '500px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                            <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Profil Bilgileri</h3>
-                            <button onClick={() => setIsProfileModalOpen(false)}><X /></button>
-                        </div>
-                        <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            <div>
-                                <label className="form-label">Ad Soyad</label>
-                                <input className="form-input" value={profileData.full_name} onChange={e => setProfileData({ ...profileData, full_name: e.target.value })} required />
-                            </div>
-                            <div>
-                                <label className="form-label">Telefon</label>
-                                <input className="form-input" value={profileData.phone} onChange={e => setProfileData({ ...profileData, phone: e.target.value })} placeholder="0555 555 55 55" />
-                            </div>
-                            <div>
-                                <label className="form-label">Stüdyo İsmi (Varsa)</label>
-                                <input className="form-input" value={profileData.studio_name} onChange={e => setProfileData({ ...profileData, studio_name: e.target.value })} placeholder="Mecit Prodüksiyon" />
-                            </div>
-                            <div style={{ padding: '10px', backgroundColor: 'var(--background)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                    <span>Email:</span>
-                                    <span style={{ fontWeight: 'bold', color: 'var(--text-main)' }}>{user?.email}</span>
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Email adresi değiştirilemez.</div>
-                            </div>
-                            <button type="submit" className="btn btn-primary">Kaydet</button>
-                        </form>
-                    </div>
-                    <style jsx>{`
-                        .form-label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 500; }
-                        .form-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--background); color: var(--text-main); }
-                    `}</style>
-                </div>
-            )}
+
         </div>
     );
 }
