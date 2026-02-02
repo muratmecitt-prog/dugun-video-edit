@@ -21,7 +21,8 @@ export default function AdminDashboard() {
     const [enlargedImage, setEnlargedImage] = useState(null); // Full-page image zoom
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('Hepsi');
+    const [activeTab, setActiveTab] = useState('Siparişler');
+    const [profiles, setProfiles] = useState([]);
 
     // Security Check: Only allow if email matches owner
     useEffect(() => {
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
         }
     }, [user, isLoading, router]);
 
-    const fetchOrders = async () => {
+    const fetchData = async () => {
         setIsLoading(true);
         setError(null);
         try {
