@@ -49,7 +49,7 @@ export default function UserDashboard() {
                 // Check if profile exists
                 const { data: existingProfile, error: fetchError } = await supabase
                     .from('profiles')
-                    .select('id')
+                    .select('*')
                     .eq('id', user.id)
                     .single();
 
@@ -69,6 +69,14 @@ export default function UserDashboard() {
                         }]);
 
                     if (insertError) console.error('Error creating profile:', insertError);
+                } else if (!existingProfile.email) {
+                    // ⚠️ PATCH: If profile exists but email is missing (legacy bug), update it
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ email: user.email })
+                        .eq('id', user.id);
+
+                    if (updateError) console.error('Error patching profile email:', updateError);
                 }
             } catch (err) {
                 console.error('Profile sync error:', err);

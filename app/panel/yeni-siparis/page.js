@@ -214,17 +214,25 @@ function NewOrderForm() {
         setError(null);
 
         try {
-            // 1. Profile Updates
-            if (missingInfo.studio || missingInfo.phone) {
-                const updates = {};
-                if (missingInfo.studio) updates.studio_name = studioName;
-                if (missingInfo.phone) updates.phone = formData.phone;
+            // 1. Profile Updates (Ensure email/name are also saved)
+            const updates = {};
+            if (missingInfo.studio) updates.studio_name = studioName;
+            if (missingInfo.phone) updates.phone = formData.phone;
 
-                if (Object.keys(updates).length > 0) {
-                    updates.id = user.id;
-                    updates.updated_at = new Date().toISOString();
-                    await supabase.from('profiles').upsert(updates);
-                }
+            // Always ensure these are present/updated
+            updates.email = user.email;
+            if (user.user_metadata?.full_name) {
+                updates.full_name = user.user_metadata.full_name;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                updates.id = user.id;
+                updates.updated_at = new Date().toISOString();
+
+                // Use upsert to create or update
+                // Note: If profile was missing, this creates it. 
+                // If it existed but lacked email (legacy bug), this fixes it.
+                await supabase.from('profiles').upsert(updates);
             }
 
             // 2. Prepare Order Data
