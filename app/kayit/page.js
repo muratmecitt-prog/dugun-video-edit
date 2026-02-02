@@ -46,8 +46,8 @@ export default function RegisterPage() {
 
             if (authError) throw authError;
 
-            // Also save to profiles table
-            if (authData.user) {
+            // 1. If we have a session (Verification OFF or Auto-Login), create profile and redirect
+            if (authData.session) {
                 const { error: profileError } = await supabase
                     .from('profiles')
                     .upsert({
@@ -61,12 +61,16 @@ export default function RegisterPage() {
 
                 if (profileError) {
                     console.error('Profile save error:', profileError.message);
-                    throw new Error('Profil bilgileri kaydedilemedi: ' + profileError.message);
                 }
-            }
 
-            // Direct redirect to panel after successful signup and profile creation
-            router.push('/panel');
+                router.push('/panel');
+            }
+            // 2. If NO session (Verification ON), show nice message
+            else {
+                setSuccess('Kayıt başarılı! Lütfen email adresinize gönderilen doğrulama linkine tıklayın. (Spam kutusunu da kontrol edin).');
+                // Form reset is optional but usually good UX
+                e.target.reset();
+            }
 
         } catch (err) {
             setError(translateError(err.message));
