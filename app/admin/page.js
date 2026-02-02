@@ -212,7 +212,8 @@ export default function AdminDashboard() {
                         couple_name: order.couple_name,
                         studio_name: order.studio_name,
                         status: updates.status,
-                        download_link: updates.download_link || order.download_link || ''
+                        download_link: updates.download_link || order.download_link || '',
+                        action_url: `${window.location.origin}/panel` // Make link dynamic
                     });
 
                     if (emailResult.success) {

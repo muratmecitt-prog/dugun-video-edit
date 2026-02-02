@@ -135,7 +135,8 @@ function NewOrderForm() {
                 package: formData.package,
                 wt_link: formData.wt_link,
                 customer_email: user.email,
-                customer_phone: missingInfo.phone ? formData.phone : 'Profilde kayıtlı' // Or fetch it
+                customer_phone: missingInfo.phone ? formData.phone : 'Profilde kayıtlı',
+                action_url: `${window.location.origin}/admin` // Make link dynamic (localhost or prod)
             });
 
             // Redirect after a few seconds
