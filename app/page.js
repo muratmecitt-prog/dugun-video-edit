@@ -37,7 +37,7 @@ export default function Home() {
     <>
       {/* Hero Section */}
       <section style={{
-        padding: '100px 0 60px',
+        padding: '60px 0 40px',
         textAlign: 'center',
         background: 'linear-gradient(180deg, rgba(202,138,4,0.08) 0%, rgba(10,10,10,0) 100%)',
         position: 'relative',
@@ -88,23 +88,25 @@ export default function Home() {
 
       {/* Portfolio Marquee Section */}
       {portfolio.length > 0 && (
-        <section style={{ padding: '60px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
-          <div className="container" style={{ marginBottom: '40px', textAlign: 'center' }}>
+        <section style={{ padding: '40px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div className="container" style={{ marginBottom: '30px', textAlign: 'center' }}>
             <h2 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Kurgularımız</h2>
           </div>
 
-          <div className="marquee-container">
-            <div className="marquee-content">
-              {/* Double the list for seamless looping */}
-              {[...portfolio, ...portfolio].map((item, idx) => (
+          <div className={portfolio.length > 3 ? "marquee-container" : "container"} style={portfolio.length <= 3 ? { display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '30px' } : {}}>
+            <div className={portfolio.length > 3 ? "marquee-content" : ""} style={portfolio.length <= 3 ? { display: 'contents' } : {}}>
+              {/* Only loop if we have enough items for a marquee */}
+              {(portfolio.length > 3 ? [...portfolio, ...portfolio] : portfolio).map((item, idx) => (
                 <div key={idx}
                   onClick={() => setSelectedVideo(item)}
                   style={{
                     minWidth: '350px',
+                    maxWidth: portfolio.length <= 3 ? '400px' : '350px',
+                    flex: portfolio.length <= 3 ? '1' : 'none',
                     height: '220px',
                     backgroundColor: 'var(--surface)',
                     borderRadius: '12px',
-                    marginRight: '30px',
+                    marginRight: portfolio.length > 3 ? '30px' : '0',
                     flexShrink: 0,
                     cursor: 'pointer',
                     position: 'relative',
@@ -113,8 +115,7 @@ export default function Home() {
                     group: 'hover'
                   }}
                   className="portfolio-card"
-                >
-                  <img
+                >            <img
                     src={`https://img.youtube.com/vi/${item.video_url.includes('v=') ? item.video_url.split('v=')[1].split('&')[0] : ''}/hqdefault.jpg`}
                     alt={item.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, transition: 'opacity 0.3s' }}
