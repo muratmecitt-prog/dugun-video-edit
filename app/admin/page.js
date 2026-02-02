@@ -79,7 +79,7 @@ export default function AdminDashboard() {
     useEffect(() => {
         const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
         if (user && isAdmin) {
-            fetchOrders();
+            fetchData();
         } else if (user && !isAdmin) {
             setIsLoading(false); // Stop loading so security check can redirect
         }
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
                 <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '30px' }}>
                     <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>Bağlantı Hatası:</h3>
                     <p style={{ fontSize: '0.95rem' }}>{error}</p>
-                    <button onClick={fetchOrders} className="btn btn-outline" style={{ marginTop: '15px', padding: '5px 15px' }}>Tekrar Dene</button>
+                    <button onClick={fetchData} className="btn btn-outline" style={{ marginTop: '15px', padding: '5px 15px' }}>Tekrar Dene</button>
                 </div>
             )}
 
