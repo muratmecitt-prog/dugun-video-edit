@@ -40,6 +40,42 @@ export default function UserDashboard() {
 
     useEffect(() => {
         fetchOrders();
+
+        // Sync profile to ensure it exists in the database
+        const syncProfile = async () => {
+            if (!user) return;
+
+            try {
+                // Check if profile exists
+                const { data: existingProfile, error: fetchError } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', user.id)
+                    .single();
+
+                if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found"
+                    console.error('Error checking profile:', fetchError);
+                }
+
+                if (!existingProfile) {
+                    // Create profile if it doesn't exist
+                    const { error: insertError } = await supabase
+                        .from('profiles')
+                        .insert([{
+                            id: user.id,
+                            email: user.email,
+                            full_name: user.user_metadata?.full_name || '',
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (insertError) console.error('Error creating profile:', insertError);
+                }
+            } catch (err) {
+                console.error('Profile sync error:', err);
+            }
+        };
+
+        syncProfile();
     }, [user]);
 
     useEffect(() => {
