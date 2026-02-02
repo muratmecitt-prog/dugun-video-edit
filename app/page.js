@@ -477,18 +477,18 @@ function ThreeDCard({ img, title, desc, btnText, scrollY, startScroll, endScroll
     const scale = 0.6 + (easeOut * (ZOOM_LEVEL - 0.6)); // Dynamic Max Zoom
     transform = `translateY(${translateY}px) rotateX(${rotateX}deg) scale(${scale})`;
 
-    overlayOpacity = Math.max(0, (p - 0.6) / 0.4) * OVERLAY_OPACITY_MAX;
+    overlayOpacity = Math.max(0, (p - 0.6) / 0.4); // 0 to 1 fade
   } else if (scrollY >= enterEnd && scrollY < exitStart) {
     opacity = 1;
-    transform = `translateY(0px) rotateX(0deg) scale(${ZOOM_LEVEL})`; // Dynamic Max Zoom
-    overlayOpacity = OVERLAY_OPACITY_MAX;
+    transform = `translateY(0px) rotateX(0deg) scale(${ZOOM_LEVEL})`;
+    overlayOpacity = 1; // Fully visible container
   } else if (scrollY >= exitStart && scrollY < exitEnd) {
     const p = (scrollY - exitStart) / (exitEnd - exitStart);
     opacity = 1 - p;
     const translateY = 0 - (p * 300);
-    const scale = ZOOM_LEVEL - (p * 0.3); // Dynamic Decay
+    const scale = ZOOM_LEVEL - (p * 0.3);
     transform = `translateY(${translateY}px) scale(${scale})`;
-    overlayOpacity = (1 - p * 1.5) * OVERLAY_OPACITY_MAX;
+    overlayOpacity = 1 - p * 1.5;
   } else {
     opacity = 0;
     transform = 'translateY(-300px) scale(0.8)';
@@ -541,9 +541,9 @@ function ThreeDCard({ img, title, desc, btnText, scrollY, startScroll, endScroll
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(0,0,0,0.7)',
+          background: `rgba(0,0,0,${OVERLAY_OPACITY_MAX})`, // Dynamic Background Darkness
           backdropFilter: `blur(${BLUR_AMOUNT}px)`,
-          opacity: overlayOpacity,
+          opacity: overlayOpacity, // Fade In/Out the whole container (0 to 1)
           transition: 'opacity 0.1s linear',
           textAlign: 'center',
           padding: '0 40px'
