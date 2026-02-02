@@ -136,12 +136,17 @@ export default function AdminDashboard() {
                 .order('created_at', { ascending: false });
             if (campaignsError) throw campaignsError;
 
-            // Fetch FAQs
-            const { data: faqsData, error: faqsError } = await supabase
-                .from('faqs')
-                .select('*')
-                .order('display_order', { ascending: true });
-            if (faqsError) throw faqsError;
+            // Fetch FAQs (Non-blocking)
+            let faqsData = [];
+            try {
+                const { data, error } = await supabase
+                    .from('faqs')
+                    .select('*')
+                    .order('display_order', { ascending: true });
+                if (!error) faqsData = data;
+            } catch (faqErr) {
+                console.warn('FAQ fetch failed (table might be missing):', faqErr);
+            }
 
             // Enrich orders with profile data
             const enrichedOrders = ordersData.map(order => {
