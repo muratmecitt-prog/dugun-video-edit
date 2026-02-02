@@ -20,7 +20,46 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // UI States
+    // Form States
+    const [newTitle, setNewTitle] = useState('');
+    const [newVideoUrl, setNewVideoUrl] = useState('');
+
+    // Load drafts on mount
+    useEffect(() => {
+        const savedTitle = localStorage.getItem('draft_title');
+        const savedUrl = localStorage.getItem('draft_video_url');
+        if (savedTitle) setNewTitle(savedTitle);
+        if (savedUrl) setNewVideoUrl(savedUrl);
+    }, []);
+
+    // Save drafts on change
+    useEffect(() => {
+        localStorage.setItem('draft_title', newTitle);
+    }, [newTitle]);
+
+    useEffect(() => {
+        localStorage.setItem('draft_video_url', newVideoUrl);
+    }, [newVideoUrl]);
+
+    const handleAddPortfolio = async (e) => {
+        e.preventDefault();
+        if (!newTitle || !newVideoUrl) return;
+
+        try {
+            const { data, error } = await supabase.from('portfolio').insert([{ title: newTitle, video_url: newVideoUrl }]).select();
+            if (error) throw error;
+            setPortfolio([data[0], ...portfolio]);
+            showToast('Video portfolyoya eklendi.', 'success');
+
+            // Clear form and storage
+            setNewTitle('');
+            setNewVideoUrl('');
+            localStorage.removeItem('draft_title');
+            localStorage.removeItem('draft_video_url');
+        } catch (err) {
+            showToast('Ekleme hatası: ' + err.message, 'error');
+        }
+    };
     const [activeMainTab, setActiveMainTab] = useState('Siparişler'); // 'Siparişler' | 'Müşteriler'
     const [activeOrderFilter, setActiveOrderFilter] = useState('Hepsi'); // 'Hepsi' | 'Ödeme Bekleniyor' etc.
     const [searchTerm, setSearchTerm] = useState('');
@@ -156,13 +195,7 @@ export default function AdminDashboard() {
         }
     };
 
-    // Form persistence for mobile
-    useEffect(() => {
-        const savedTitle = localStorage.getItem('draft_title');
-        const savedUrl = localStorage.getItem('draft_video_url');
-        if (document.getElementsByName('title')[0] && savedTitle) document.getElementsByName('title')[0].value = savedTitle;
-        if (document.getElementsByName('video_url')[0] && savedUrl) document.getElementsByName('video_url')[0].value = savedUrl;
-    }, [activeMainTab]);
+
 
     const handleAddPortfolio = async (e) => {
         e.preventDefault();
@@ -466,17 +499,17 @@ export default function AdminDashboard() {
                         <h3 style={{ marginBottom: '15px', fontWeight: 'bold' }}>Yeni Video Ekle</h3>
                         <form onSubmit={handleAddPortfolio} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                             <input
-                                name="title"
+                                value={newTitle}
+                                onChange={(e) => setNewTitle(e.target.value)}
                                 required
                                 placeholder="Video Başlığı (Örn: Ayşe & Ahmet Düğün Klibi)"
-                                onChange={(e) => localStorage.setItem('draft_title', e.target.value)}
                                 style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
                             />
                             <input
-                                name="video_url"
+                                value={newVideoUrl}
+                                onChange={(e) => setNewVideoUrl(e.target.value)}
                                 required
                                 placeholder="Video Linki (YouTube/Vimeo)"
-                                onChange={(e) => localStorage.setItem('draft_video_url', e.target.value)}
                                 style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
                             />
                             <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Plus size={20} /> Ekle</button>
