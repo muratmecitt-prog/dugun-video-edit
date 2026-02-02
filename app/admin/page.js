@@ -6,7 +6,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
 import { sendNotificationEmail, templates } from '@/lib/emailService';
 import Link from 'next/link';
-import { ExternalLink, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Link as LinkIcon, Users, Package, Play, Plus } from 'lucide-react';
+import { ExternalLink, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Link as LinkIcon, Users, Package, Play, Plus, Tag, Gift, Edit, Save } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
@@ -17,8 +17,17 @@ export default function AdminDashboard() {
     const [orders, setOrders] = useState([]);
     const [profiles, setProfiles] = useState([]);
     const [portfolio, setPortfolio] = useState([]);
+    const [packages, setPackages] = useState([]);
+    const [campaigns, setCampaigns] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Package & Campaign States
+    const [editingPackage, setEditingPackage] = useState(null); // The package object being edited
+    const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
+    const [newCampaign, setNewCampaign] = useState({
+        name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: ''
+    });
 
     // Form States
     const [newTitle, setNewTitle] = useState('');
@@ -105,6 +114,20 @@ export default function AdminDashboard() {
 
             if (portfolioError) throw portfolioError;
 
+            // Fetch packages
+            const { data: packagesData, error: packagesError } = await supabase
+                .from('packages')
+                .select('*')
+                .order('display_order', { ascending: true });
+            if (packagesError) throw packagesError;
+
+            // Fetch campaigns
+            const { data: campaignsData, error: campaignsError } = await supabase
+                .from('campaigns')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (campaignsError) throw campaignsError;
+
             // Enrich orders with profile data
             const enrichedOrders = ordersData.map(order => {
                 const profile = profilesData?.find(p => p.id === order.user_id);
@@ -119,6 +142,8 @@ export default function AdminDashboard() {
             setOrders(enrichedOrders);
             setProfiles(profilesData || []);
             setPortfolio(portfolioData || []);
+            setPackages(packagesData || []);
+            setCampaigns(campaignsData || []);
         } catch (err) {
             console.error('Error fetching admin data:', err.message);
             setError(err.message);
@@ -268,6 +293,79 @@ export default function AdminDashboard() {
         }
     };
 
+    // --- PACKAGE HANDLERS ---
+    const handleUpdatePackage = async (e) => {
+        e.preventDefault();
+        if (!editingPackage) return;
+        try {
+            const { error } = await supabase
+                .from('packages')
+                .update({
+                    name: editingPackage.name,
+                    price: editingPackage.price,
+                    features: editingPackage.features,
+                    duration: editingPackage.duration,
+                    delivery_time: editingPackage.delivery_time,
+                    is_active: editingPackage.is_active
+                })
+                .eq('id', editingPackage.id);
+
+            if (error) throw error;
+
+            setPackages(packages.map(p => p.id === editingPackage.id ? editingPackage : p));
+            setEditingPackage(null);
+            showToast('Paket güncellendi.', 'success');
+        } catch (err) {
+            showToast('Güncelleme hatası: ' + err.message, 'error');
+        }
+    };
+
+    // --- CAMPAIGN HANDLERS ---
+    const handleCreateCampaign = async (e) => {
+        e.preventDefault();
+        if (!newCampaign.code || !newCampaign.discount_value) return;
+        try {
+            const payload = {
+                ...newCampaign,
+                discount_value: Number(newCampaign.discount_value),
+                min_order_count: Number(newCampaign.min_order_count),
+                usage_limit: newCampaign.usage_limit ? Number(newCampaign.usage_limit) : null
+            };
+
+            const { data, error } = await supabase.from('campaigns').insert([payload]).select();
+            if (error) throw error;
+
+            setCampaigns([data[0], ...campaigns]);
+            setIsCampaignModalOpen(false);
+            setNewCampaign({ name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: '' });
+            showToast('Kampanya oluşturuldu.', 'success');
+        } catch (err) {
+            showToast('Hata: ' + err.message, 'error');
+        }
+    };
+
+    const handleToggleCampaign = async (id, currentStatus) => {
+        try {
+            const { error } = await supabase.from('campaigns').update({ is_active: !currentStatus }).eq('id', id);
+            if (error) throw error;
+            setCampaigns(campaigns.map(c => c.id === id ? { ...c, is_active: !currentStatus } : c));
+        } catch (err) {
+            showToast('Hata: ' + err.message, 'error');
+        }
+    };
+
+    const handleDeleteCampaign = async (id) => {
+        if (!confirm('Bu kampanyayı silmek istediğinize emin misiniz?')) return;
+        try {
+            const { error } = await supabase.from('campaigns').delete().eq('id', id);
+            if (error) throw error;
+            setCampaigns(campaigns.filter(c => c.id !== id));
+            showToast('Kampanya silindi.', 'success');
+        } catch (err) {
+            showToast('Hata: ' + err.message, 'error');
+        }
+    };
+
     // Filters
     const orderCounts = {
         'Hepsi': orders.length,
@@ -367,6 +465,36 @@ export default function AdminDashboard() {
                     }}
                 >
                     <Play size={20} /> Portfolyo <span className="badge">{portfolio.length}</span>
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('Paketler')}
+                    style={{
+                        padding: '10px 20px',
+                        borderBottom: activeMainTab === 'Paketler' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeMainTab === 'Paketler' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        background: 'none',
+                        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                        cursor: 'pointer', fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <Tag size={20} /> Paketler
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('Kampanyalar')}
+                    style={{
+                        padding: '10px 20px',
+                        borderBottom: activeMainTab === 'Kampanyalar' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeMainTab === 'Kampanyalar' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        background: 'none',
+                        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                        cursor: 'pointer', fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <Gift size={20} /> Kampanyalar
                 </button>
             </div>
 
@@ -575,9 +703,96 @@ export default function AdminDashboard() {
                 </div>
             )}
 
+            {/* CONTENT: Packages */}
+            {activeMainTab === 'Paketler' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                    {packages.map(pkg => (
+                        <div key={pkg.id} style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '20px', opacity: pkg.is_active ? 1 : 0.6 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{pkg.name}</h3>
+                                <button onClick={() => setEditingPackage(pkg)} className="btn btn-outline" style={{ padding: '4px 8px' }}><Edit size={16} /></button>
+                            </div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '10px' }}>{pkg.price} TL</div>
+                            <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginBottom: '15px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                {pkg.features?.map((f, i) => <li key={i}>{f}</li>)}
+                            </ul>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                <div>⏱ {pkg.duration}</div>
+                                <div>🚚 {pkg.delivery_time}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* CONTENT: Campaigns */}
+            {activeMainTab === 'Kampanyalar' && (
+                <div>
+                    <div style={{ backgroundColor: 'var(--surface)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h3 style={{ fontWeight: 'bold' }}>Kampanyalar</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Aktif indirim kodlarını yönet.</p>
+                        </div>
+                        <button onClick={() => setIsCampaignModalOpen(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Plus size={20} /> Yeni Kampanya</button>
+                    </div>
+
+                    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                    <th style={{ padding: '16px' }}>Kampanya Adı</th>
+                                    <th style={{ padding: '16px' }}>Kod</th>
+                                    <th style={{ padding: '16px' }}>İndirim</th>
+                                    <th style={{ padding: '16px' }}>Kullanım</th>
+                                    <th style={{ padding: '16px' }}>Durum</th>
+                                    <th style={{ padding: '16px' }}>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {campaigns.map(cmp => (
+                                    <tr key={cmp.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                        <td style={{ padding: '16px', fontWeight: 'bold' }}>{cmp.name}</td>
+                                        <td style={{ padding: '16px' }}><code style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px' }}>{cmp.code}</code></td>
+                                        <td style={{ padding: '16px' }}>{cmp.discount_type === 'PERCENTAGE' ? `%${cmp.discount_value}` : `${cmp.discount_value} TL`}</td>
+                                        <td style={{ padding: '16px' }}>{cmp.used_count} / {cmp.usage_limit || '∞'}</td>
+                                        <td style={{ padding: '16px' }}>
+                                            <button
+                                                onClick={() => handleToggleCampaign(cmp.id, cmp.is_active)}
+                                                style={{
+                                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', border: 'none',
+                                                    backgroundColor: cmp.is_active ? '#dcfce7' : '#f3f4f6', color: cmp.is_active ? '#166534' : '#6b7280'
+                                                }}
+                                            >
+                                                {cmp.is_active ? 'Aktif' : 'Pasif'}
+                                            </button>
+                                        </td>
+                                        <td style={{ padding: '16px' }}>
+                                            <button onClick={() => handleDeleteCampaign(cmp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             {/* Modals */}
             {viewingRevision && (
                 <RevisionModal revision={viewingRevision} onClose={() => setViewingRevision(null)} setEnlargedImage={setEnlargedImage} />
+            )}
+
+            {editingPackage && (
+                <EditPackageModal pkg={editingPackage} onClose={() => setEditingPackage(null)} onSave={handleUpdatePackage} setEditingPackage={setEditingPackage} />
+            )}
+
+            {isCampaignModalOpen && (
+                <NewCampaignModal
+                    newCampaign={newCampaign}
+                    setNewCampaign={setNewCampaign}
+                    onClose={() => setIsCampaignModalOpen(false)}
+                    onSave={handleCreateCampaign}
+                />
             )}
 
             {enlargedImage && (
@@ -596,6 +811,116 @@ export default function AdminDashboard() {
 }
 
 // Extracted Modal Component for cleaner code
+
+function EditPackageModal({ pkg, onClose, onSave, setEditingPackage }) {
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+            <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '500px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Paketi Düzenle</h3>
+                    <button onClick={onClose}><X /></button>
+                </div>
+                <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div>
+                        <label className="form-label">Paket İsmi</label>
+                        <input className="form-input" value={pkg.name} onChange={e => setEditingPackage({ ...pkg, name: e.target.value })} required />
+                    </div>
+                    <div>
+                        <label className="form-label">Fiyat (TL)</label>
+                        <input className="form-input" type="number" value={pkg.price} onChange={e => setEditingPackage({ ...pkg, price: Number(e.target.value) })} required />
+                    </div>
+                    <div>
+                        <label className="form-label">Özellikler (Her satıra bir tane)</label>
+                        <textarea
+                            className="form-input"
+                            rows="5"
+                            value={pkg.features?.join('\n')}
+                            onChange={e => setEditingPackage({ ...pkg, features: e.target.value.split('\n') })}
+                        />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div>
+                            <label className="form-label">Süre</label>
+                            <input className="form-input" value={pkg.duration} onChange={e => setEditingPackage({ ...pkg, duration: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="form-label">Teslim Süresi</label>
+                            <input className="form-input" value={pkg.delivery_time} onChange={e => setEditingPackage({ ...pkg, delivery_time: e.target.value })} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input
+                            type="checkbox"
+                            checked={pkg.is_active}
+                            onChange={e => setEditingPackage({ ...pkg, is_active: e.target.checked })}
+                            id="isActive"
+                            style={{ width: '20px', height: '20px' }}
+                        />
+                        <label htmlFor="isActive">Paket Aktif</label>
+                    </div>
+                    <button type="submit" className="btn btn-primary">Kaydet</button>
+                </form>
+            </div>
+            <style jsx>{`
+                .form-label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 500; }
+                .form-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--background); color: var(--text-main); }
+            `}</style>
+        </div>
+    );
+}
+
+function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+            <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '500px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Yeni Kampanya</h3>
+                    <button onClick={onClose}><X /></button>
+                </div>
+                <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div>
+                        <label className="form-label">Kampanya Adı (Admin)</label>
+                        <input className="form-input" value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} placeholder="Örn: Açılış İndirimi" required />
+                    </div>
+                    <div>
+                        <label className="form-label">İndirim Kodu</label>
+                        <input className="form-input" value={newCampaign.code} onChange={e => setNewCampaign({ ...newCampaign, code: e.target.value.toUpperCase() })} placeholder="Örn: YENI20" required />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div>
+                            <label className="form-label">İndirim Tipi</label>
+                            <select className="form-input" value={newCampaign.discount_type} onChange={e => setNewCampaign({ ...newCampaign, discount_type: e.target.value })}>
+                                <option value="PERCENTAGE">Yüzde (%)</option>
+                                <option value="FIXED">Sabit Tutar (TL)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="form-label">Değer</label>
+                            <input className="form-input" type="number" value={newCampaign.discount_value} onChange={e => setNewCampaign({ ...newCampaign, discount_value: e.target.value })} placeholder="20 veya 500" required />
+                        </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div>
+                            <label className="form-label">Min. Sipariş (Opsiyonel)</label>
+                            <input className="form-input" type="number" value={newCampaign.min_order_count} onChange={e => setNewCampaign({ ...newCampaign, min_order_count: e.target.value })} placeholder="0" />
+                            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>İlk X sipariş için geçerli</p>
+                        </div>
+                        <div>
+                            <label className="form-label">Limit (Opsiyonel)</label>
+                            <input className="form-input" type="number" value={newCampaign.usage_limit} onChange={e => setNewCampaign({ ...newCampaign, usage_limit: e.target.value })} placeholder="Sınırsız" />
+                        </div>
+                    </div>
+                    <button type="submit" className="btn btn-primary">Oluştur</button>
+                </form>
+            </div>
+            <style jsx>{`
+                .form-label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 500; }
+                .form-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--background); color: var(--text-main); }
+            `}</style>
+        </div>
+    );
+}
+
 function RevisionModal({ revision, onClose, setEnlargedImage }) {
     return (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>

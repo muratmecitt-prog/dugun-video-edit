@@ -3,13 +3,11 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 
-export default function PriceCard({ title, price, duration, features, deliveryTime, isPopular }) {
+export default function PriceCard({ title, price, duration, features, deliveryTime, isPopular, displayOrder }) {
     const { user } = useAuth();
 
-    // Determine target link: if logged in, go to new order, else go to login
-    const packageSlug = `PAKET ${title === 'Teaser' ? '1' : title === 'Düğün Klibi' ? '2' : title === 'Teaser + Klip' ? '3' : '4'}`;
-    // We'll match precisely the text in the select options
-    const fullPackageName = `${packageSlug} — ${title} (${price} TL)`;
+    // Generate dynamic package name: "PAKET 1 — Teaser (2.000 TL)"
+    const fullPackageName = `PAKET ${displayOrder} — ${title} (${price} TL)`;
 
     const targetHref = user
         ? `/panel/yeni-siparis?package=${encodeURIComponent(fullPackageName)}`
