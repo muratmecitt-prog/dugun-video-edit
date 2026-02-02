@@ -39,6 +39,46 @@ function NewOrderForm() {
     const [autoCampaign, setAutoCampaign] = useState(null); // Store global campaign to fallback
     const [discountError, setDiscountError] = useState(null);
 
+    // Default / Fallback Packages (Safety Net)
+    const DEFAULT_PACKAGES = [
+        {
+            id: 'pkg_teaser',
+            name: 'Teaser Paket',
+            price: 3500,
+            features: ['1 Dakika Süre', 'Müzikli Kurgu', 'Renk Düzenleme (Color)', '1 Revizyon Hakkı'],
+            delivery_time: '5-7 Gün',
+            display_order: 1,
+            is_active: true
+        },
+        {
+            id: 'pkg_klip',
+            name: 'Düğün Klibi',
+            price: 5500,
+            features: ['3-5 Dakika Süre', 'Sinematik Kurgu', 'Ses Tasarımı', 'Renk Düzenleme (Color)', '2 Revizyon Hakkı'],
+            delivery_time: '7-10 Gün',
+            display_order: 2,
+            is_active: true
+        },
+        {
+            id: 'pkg_hikaye',
+            name: 'Düğün Hikayesi',
+            price: 8500,
+            features: ['10-15 Dakika Süre', 'Belgesel Tadında', 'Konuşmalar Dahil', 'Gelişmiş Renk (Log/Rec709)', '3 Revizyon Hakkı'],
+            delivery_time: '14-21 Gün',
+            display_order: 3,
+            is_active: true
+        },
+        {
+            id: 'pkg_full',
+            name: 'Full Belgesel',
+            price: 12000,
+            features: ['45-60 Dakika Süre', 'Tüm Gün Özeti', 'Multi-Cam Kurgu', 'Ses Miksajı', 'Sınırsız Revizyon'],
+            delivery_time: '30 Gün',
+            display_order: 4,
+            is_active: true
+        }
+    ];
+
     // Fetch Packages
     useEffect(() => {
         const fetchPackages = async () => {
@@ -48,9 +88,8 @@ function NewOrderForm() {
                 .eq('is_active', true)
                 .order('display_order', { ascending: true });
 
-            if (data && data.length > 0) {
-                setPackages(data);
-            }
+            const finalPackages = (data && data.length > 0) ? data : DEFAULT_PACKAGES;
+            setPackages(finalPackages);
 
             // Check for Auto-Apply Campaigns
             const { data: campaignsData } = await supabase

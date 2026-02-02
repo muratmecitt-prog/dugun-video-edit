@@ -9,6 +9,46 @@ export default function PackagesSection({ showTitle = true, transparentCards = f
     const [activeCampaign, setActiveCampaign] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Default / Fallback Packages (Safety Net)
+    const DEFAULT_PACKAGES = [
+        {
+            id: 'pkg_teaser',
+            name: 'Teaser Paket',
+            price: 3500,
+            features: ['1 Dakika Süre', 'Müzikli Kurgu', 'Renk Düzenleme (Color)', '1 Revizyon Hakkı'],
+            delivery_time: '5-7 Gün',
+            display_order: 1,
+            is_active: true
+        },
+        {
+            id: 'pkg_klip',
+            name: 'Düğün Klibi',
+            price: 5500,
+            features: ['3-5 Dakika Süre', 'Sinematik Kurgu', 'Ses Tasarımı', 'Renk Düzenleme (Color)', '2 Revizyon Hakkı'],
+            delivery_time: '7-10 Gün',
+            display_order: 2,
+            is_active: true
+        },
+        {
+            id: 'pkg_hikaye',
+            name: 'Düğün Hikayesi',
+            price: 8500,
+            features: ['10-15 Dakika Süre', 'Belgesel Tadında', 'Konuşmalar Dahil', 'Gelişmiş Renk (Log/Rec709)', '3 Revizyon Hakkı'],
+            delivery_time: '14-21 Gün',
+            display_order: 3,
+            is_active: true
+        },
+        {
+            id: 'pkg_full',
+            name: 'Full Belgesel',
+            price: 12000,
+            features: ['45-60 Dakika Süre', 'Tüm Gün Özeti', 'Multi-Cam Kurgu', 'Ses Miksajı', 'Sınırsız Revizyon'],
+            delivery_time: '30 Gün',
+            display_order: 4,
+            is_active: true
+        }
+    ];
+
     useEffect(() => {
         const fetchData = async () => {
             // Fetch Packages
@@ -28,7 +68,10 @@ export default function PackagesSection({ showTitle = true, transparentCards = f
                 .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`) // Not ended
                 .order('created_at', { ascending: false });
 
-            if (packagesData) setPackages(packagesData);
+            // Use DB data if available, otherwise use Defaults
+            const finalPackages = (packagesData && packagesData.length > 0) ? packagesData : DEFAULT_PACKAGES;
+            setPackages(finalPackages);
+
             if (campaignsData && campaignsData.length > 0) {
                 // Pick the most recent active auto-apply campaign
                 setActiveCampaign(campaignsData[0]);
