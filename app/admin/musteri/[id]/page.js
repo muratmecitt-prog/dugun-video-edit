@@ -112,7 +112,7 @@ export default function CustomerDetailPage({ params }) {
                                 <Mail size={16} /> {profile.email}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Calendar size={16} /> Kayıt: {new Date(profile.created_at).toLocaleDateString('tr-TR')}
+                                <Calendar size={16} /> Kayıt: {profile.created_at ? new Date(profile.created_at).toLocaleDateString('tr-TR') : '-'}
                             </div>
                         </div>
                     </div>
