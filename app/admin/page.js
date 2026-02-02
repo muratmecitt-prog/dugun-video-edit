@@ -161,12 +161,20 @@ export default function AdminDashboard() {
 
             if (updates.status) {
                 const order = orders.find(o => o.id === orderId);
-                sendNotificationEmail(templates.USER_STATUS_UPDATE, {
+                console.log('Attempting to send email for order:', order);
+                console.log('User email:', order.email);
+
+                alert(`Email gönderimi deneniyor...\nAlıcı: ${order.email}\nID: ${orderId}`);
+
+                const emailParams = {
                     to_email: order.email,
                     order_id: orderId,
                     status: updates.status,
                     download_link: updates.download_link || order.download_link || ''
-                });
+                };
+                console.log('Email Params:', emailParams);
+
+                sendNotificationEmail(templates.USER_STATUS_UPDATE, emailParams);
             }
 
             setTimeout(() => {
@@ -387,7 +395,8 @@ export default function AdminDashboard() {
                                         <Link href={`/admin/musteri/${order.user_id}`} style={{ fontWeight: '500' }}>{order.studio_name}</Link>
                                     </td>
                                     <td style={{ padding: '16px' }}>
-                                        {order.couple_name}
+                                        <div style={{ fontWeight: 'bold' }}>{order.couple_name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{order.email}</div>
                                         {(order.revision_text || order.revision_items?.length > 0) && (
                                             <button onClick={() => setViewingRevision(order)} style={{ display: 'block', marginTop: '5px', fontSize: '0.75rem', color: '#a855f7', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                                                 📝 Revize Notu
