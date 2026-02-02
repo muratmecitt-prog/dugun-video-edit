@@ -422,7 +422,7 @@ function NewOrderForm() {
                             {loadingPackages ? <p>Paketler yükleniyor...</p> : (
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                     {packages.map((pkg) => {
-                                        const pkgStr = `PAKET ${pkg.display_order} — ${pkg.name} (${pkg.price} TL)`;
+                                        const pkgStr = `PAKET ${pkg.display_order} — ${pkg.name} (${pkg.price.toLocaleString('tr-TR')} TL)`;
                                         const isSelected = formData.package === pkgStr;
 
                                         // Calculate display price for this package
@@ -495,11 +495,11 @@ function NewOrderForm() {
                                                     <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         {badgeText ? (
                                                             <>
-                                                                <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '0.9em' }}>{pkg.price} TL</span>
-                                                                <span style={{ fontWeight: 'bold', color: '#16a34a', fontSize: '1.2em' }}>{displayPrice} TL</span>
+                                                                <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '0.9em' }}>{pkg.price.toLocaleString('tr-TR')} TL</span>
+                                                                <span style={{ fontWeight: 'bold', color: '#16a34a', fontSize: '1.2em' }}>{displayPrice.toLocaleString('tr-TR')} TL</span>
                                                             </>
                                                         ) : (
-                                                            <span>{pkg.price} TL</span>
+                                                            <span>{pkg.price.toLocaleString('tr-TR')} TL</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -533,7 +533,7 @@ function NewOrderForm() {
                                     </div>
                                     <div style={{ marginTop: '10px' }}>
                                         <span style={{ color: '#4ade80', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                            İndirim Tutarı: -{discountAmount} TL
+                                            İndirim Tutarı: -{discountAmount.toLocaleString('tr-TR')} TL
                                         </span>
                                     </div>
                                 </div>
@@ -569,7 +569,7 @@ function NewOrderForm() {
                                             </button>
                                         </div>
                                         <div style={{ marginTop: '10px', fontWeight: 'bold', fontSize: '1.1rem', color: '#15803d' }}>
-                                            -{discountAmount} TL İndirim
+                                            -{discountAmount.toLocaleString('tr-TR')} TL İndirim
                                         </div>
                                     </div>
                                 ) : (
@@ -641,18 +641,18 @@ function NewOrderForm() {
                             <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-secondary)' }}>
                                     <span>Paket Tutarı:</span>
-                                    <span>{basePrice} TL</span>
+                                    <span>{basePrice.toLocaleString('tr-TR')} TL</span>
                                 </div>
                                 {discountAmount > 0 && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#16a34a' }}>
                                         <span>İndirim ({appliedCampaign ? appliedCampaign.name : 'Kampanya'}):</span>
-                                        <span>-{discountAmount} TL</span>
+                                        <span>-{discountAmount.toLocaleString('tr-TR')} TL</span>
                                     </div>
                                 )}
                                 <div style={{ borderTop: '1px dashed var(--border)', margin: '15px 0' }}></div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Ödenecek Tutar:</span>
-                                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{finalPrice} TL</span>
+                                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{finalPrice.toLocaleString('tr-TR')} TL</span>
                                 </div>
                             </div>
 
