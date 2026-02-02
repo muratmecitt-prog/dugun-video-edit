@@ -1,17 +1,35 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Video, Menu, X, User, LogOut, Settings, MessageCircle } from 'lucide-react';
-import { useState } from 'react';
+import { Video, Menu, X, User, LogOut, Settings, MessageCircle, Sun, Moon } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useAuth } from './AuthProvider';
 
 export default function Navbar() {
     const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { user, signOut } = useAuth();
+    const [theme, setTheme] = useState('dark');
 
     const isActive = (path) => pathname === path;
     const closeMenu = () => setIsMenuOpen(false);
+
+    // Initialize Theme
+    useEffect(() => {
+        // Build-time safety
+        if (typeof window !== 'undefined') {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+    };
 
     return (
         <nav style={{
@@ -86,14 +104,35 @@ export default function Navbar() {
                     {/* WhatsApp Button */}
                 </div>
 
-                {/* Mobile Hamburger */}
-                <button
-                    className="mobile-nav-toggle"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-main)' }}
-                >
-                    {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        className="btn btn-outline"
+                        style={{
+                            padding: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '50%',
+                            width: '40px',
+                            height: '40px',
+                            border: '1px solid var(--border)'
+                        }}
+                        title={theme === 'dark' ? 'Açık Mod' : 'Koyu Mod'}
+                    >
+                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+
+                    {/* Mobile Hamburger */}
+                    <button
+                        className="mobile-nav-toggle"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-main)' }}
+                    >
+                        {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                    </button>
+                </div>
 
             </div>
 

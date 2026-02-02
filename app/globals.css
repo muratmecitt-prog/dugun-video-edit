@@ -29,6 +29,25 @@
   --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
+[data-theme='light'] {
+  --background: #ffffff;
+  --surface: #f8f8f8;
+  --surface-hover: #eef0f2;
+
+  --primary: #ca8a04;
+  --primary-hover: #b45309; 
+  --primary-foreground: #ffffff;
+
+  --text-main: #0a0a0a;
+  --text-secondary: #525252;
+  --text-muted: #737373;
+
+  --border: #e5e7eb;
+  --border-light: #d1d5db;
+
+  --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
