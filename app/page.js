@@ -105,36 +105,47 @@ export default function Home() {
   // If settings exist, use them to build scenes. Otherwise use default.
   let scenesPayload = [];
 
-  if (siteSettings && siteSettings.scenes && siteSettings.scenes.length > 0) {
-    scenesPayload = [
-      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
-      ...siteSettings.scenes.map((s, i) => {
-        // Replicating the original specific offsets:
-        // Card 0 (FCP): Start 0, End 2H
-        // Card 1 (Step 1): Start 1.5H, End 3H
-        // Card 2 (Step 2): Start 2.5H, End 4H
-        // ...
+  // Fallback/Default FCP Card (The "Intro" Card)
+  const defaultFCP = {
+    id: 'fcp',
+    type: 'card',
+    title: 'İşinizi Büyütmeye Odaklanın',
+    desc: "Siz çekin, biz kurgulayalım. Türkiye'nin profesyonelleri için\nhızlı, standart ve kaliteli video edit hizmeti.",
+    btnText: 'Hemen Başlayın',
+    img: '/fcp-interface.png'
+  };
 
-        let start, end;
-        if (i === 0) {
-          start = 0;
-          end = SCENE_HEIGHT * 2;
-        } else {
-          // For i=1 -> 1.5H
-          // For i=2 -> 2.5H
-          start = SCENE_HEIGHT * (0.5 + i);
-          end = SCENE_HEIGHT * (2 + i);
-        }
+  // Ensure scenes exist
+  let activeScenes = siteSettings?.scenes || [];
 
-        return {
-          ...s,
-          type: 'card',
-          startScroll: start,
-          endScroll: end
-        };
-      })
-    ];
-  } else {
+  // Safety: If FCP card is missing (legacy data), inject it at the start
+  if (!activeScenes.find(s => s.id === 'fcp')) {
+    activeScenes = [defaultFCP, ...activeScenes];
+  }
+
+  scenesPayload = [
+    { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
+    ...activeScenes.map((s, i) => {
+      let start, end;
+      if (i === 0) {
+        // First card (FCP) - Immediately overlaps
+        start = 0;
+        end = SCENE_HEIGHT * 2;
+      } else {
+        // Subsequent cards - Staggered
+        start = SCENE_HEIGHT * (0.5 + i);
+        end = SCENE_HEIGHT * (2 + i);
+      }
+
+      return {
+        ...s,
+        type: 'card',
+        startScroll: start,
+        endScroll: end
+      };
+    })
+  ];
+  if (!siteSettings?.scenes?.length) { // This condition means no dynamic scenes were loaded from DB
     // Fallback to hardcoded
     scenesPayload = [
       { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
