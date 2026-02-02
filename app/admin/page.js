@@ -197,26 +197,7 @@ export default function AdminDashboard() {
 
 
 
-    const handleAddPortfolio = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const title = formData.get('title');
-        const video_url = formData.get('video_url');
 
-        if (!title || !video_url) return;
-
-        try {
-            const { data, error } = await supabase.from('portfolio').insert([{ title, video_url }]).select();
-            if (error) throw error;
-            setPortfolio([data[0], ...portfolio]);
-            showToast('Video portfolyoya eklendi.', 'success');
-            e.target.reset();
-            localStorage.removeItem('draft_title');
-            localStorage.removeItem('draft_video_url');
-        } catch (err) {
-            showToast('Ekleme hatası: ' + err.message, 'error');
-        }
-    };
 
     const handleDeletePortfolio = async (id) => {
         if (!confirm('Bu videoyu portfolyodan silmek istiyor musunuz?')) return;
