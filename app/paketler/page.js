@@ -85,6 +85,7 @@ export default function PackagesPage() {
                     return (
                         <PriceCard
                             key={pkg.id}
+                            id={pkg.id}
                             title={pkg.name}
                             price={finalPrice.toLocaleString('tr-TR')}
                             originalPrice={originalPrice ? originalPrice.toLocaleString('tr-TR') : null}

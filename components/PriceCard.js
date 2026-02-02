@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 
-export default function PriceCard({ title, price, originalPrice, badgeText, duration, features, deliveryTime, isPopular, displayOrder }) {
+export default function PriceCard({ id, title, price, originalPrice, badgeText, duration, features, deliveryTime, isPopular, displayOrder }) {
     const { user } = useAuth();
 
     // Generate dynamic package name: "PAKET 1 — Teaser (2.000 TL)"
@@ -11,7 +11,7 @@ export default function PriceCard({ title, price, originalPrice, badgeText, dura
     const fullPackageName = `PAKET ${displayOrder} — ${title} (${price} TL)`;
 
     const targetHref = user
-        ? `/panel/yeni-siparis?package=${encodeURIComponent(fullPackageName)}`
+        ? `/panel/yeni-siparis?packageId=${id}`
         : `/giris`;
 
     return (

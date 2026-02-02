@@ -76,10 +76,19 @@ function NewOrderForm() {
     // Set default package or from URL
     useEffect(() => {
         if (packages.length > 0) {
-            const pkgFromUrl = searchParams.get('package');
-            if (pkgFromUrl) {
-                // Verify if it's a valid package string format or roughly matches
-                setFormData(prev => ({ ...prev, package: pkgFromUrl }));
+            const pkgIdFromUrl = searchParams.get('packageId');
+            const pkgNameFromUrl = searchParams.get('package');
+
+            if (pkgIdFromUrl) {
+                // Prioritize ID
+                const p = packages.find(pkg => pkg.id === pkgIdFromUrl);
+                if (p) {
+                    const defaultStr = `PAKET ${p.display_order} — ${p.name} (${p.price} TL)`;
+                    setFormData(prev => ({ ...prev, package: defaultStr }));
+                }
+            } else if (pkgNameFromUrl) {
+                // Fallback to name (Legacy)
+                setFormData(prev => ({ ...prev, package: pkgNameFromUrl }));
             } else if (!formData.package) {
                 // Default to first one
                 const p = packages[0];
