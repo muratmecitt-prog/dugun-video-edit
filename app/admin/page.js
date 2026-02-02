@@ -156,6 +156,14 @@ export default function AdminDashboard() {
         }
     };
 
+    // Form persistence for mobile
+    useEffect(() => {
+        const savedTitle = localStorage.getItem('draft_title');
+        const savedUrl = localStorage.getItem('draft_video_url');
+        if (document.getElementsByName('title')[0] && savedTitle) document.getElementsByName('title')[0].value = savedTitle;
+        if (document.getElementsByName('video_url')[0] && savedUrl) document.getElementsByName('video_url')[0].value = savedUrl;
+    }, [activeMainTab]);
+
     const handleAddPortfolio = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -170,6 +178,8 @@ export default function AdminDashboard() {
             setPortfolio([data[0], ...portfolio]);
             showToast('Video portfolyoya eklendi.', 'success');
             e.target.reset();
+            localStorage.removeItem('draft_title');
+            localStorage.removeItem('draft_video_url');
         } catch (err) {
             showToast('Ekleme hatası: ' + err.message, 'error');
         }
@@ -455,8 +465,20 @@ export default function AdminDashboard() {
                     <div style={{ backgroundColor: 'var(--surface)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: '30px' }}>
                         <h3 style={{ marginBottom: '15px', fontWeight: 'bold' }}>Yeni Video Ekle</h3>
                         <form onSubmit={handleAddPortfolio} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                            <input name="title" required placeholder="Video Başlığı (Örn: Ayşe & Ahmet Düğün Klibi)" style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }} />
-                            <input name="video_url" required placeholder="Video Linki (YouTube/Vimeo)" style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }} />
+                            <input
+                                name="title"
+                                required
+                                placeholder="Video Başlığı (Örn: Ayşe & Ahmet Düğün Klibi)"
+                                onChange={(e) => localStorage.setItem('draft_title', e.target.value)}
+                                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
+                            />
+                            <input
+                                name="video_url"
+                                required
+                                placeholder="Video Linki (YouTube/Vimeo)"
+                                onChange={(e) => localStorage.setItem('draft_video_url', e.target.value)}
+                                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
+                            />
                             <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Plus size={20} /> Ekle</button>
                         </form>
                     </div>

@@ -37,7 +37,7 @@ export default function Home() {
     <>
       {/* Hero Section */}
       <section style={{
-        padding: '140px 0 120px',
+        padding: '100px 0 60px',
         textAlign: 'center',
         background: 'linear-gradient(180deg, rgba(202,138,4,0.08) 0%, rgba(10,10,10,0) 100%)',
         position: 'relative',
