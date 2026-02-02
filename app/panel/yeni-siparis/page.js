@@ -443,38 +443,68 @@ function NewOrderForm() {
 
                         {/* Discount Code Section */}
                         <div style={{ padding: '20px', backgroundColor: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Tag size={16} /> İndirim Kodu
-                            </label>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <input
-                                    type="text"
-                                    value={discountCode}
-                                    onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                                    placeholder="Kodunuz var mı?"
-                                    className="form-input"
-                                    style={{ flex: 1 }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleApplyDiscount}
-                                    className="btn btn-outline"
-                                    disabled={!discountCode || appliedCampaign}
-                                >
-                                    {appliedCampaign ? 'Uygulandı' : 'Uygula'}
-                                </button>
-                            </div>
 
-                            {discountError && (
-                                <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>{discountError}</p>
-                            )}
+                            {appliedCampaign && appliedCampaign.is_auto_apply ? (
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                                        <div style={{ backgroundColor: '#eab308', padding: '8px', borderRadius: '50%' }}>
+                                            <Tag size={20} color="black" />
+                                        </div>
+                                        <div>
+                                            <h4 style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{appliedCampaign.name} Aktif!</h4>
+                                            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Size özel indirim otomatik olarak tanımlanmıştır.</p>
+                                        </div>
+                                    </div>
 
-                            {appliedCampaign && (
-                                <div style={{ marginTop: '15px', color: '#4ade80', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                                    ✅ "{appliedCampaign.code}" uygulandı! <br />
-                                    <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginRight: '10px' }}>{basePrice} TL</span>
-                                    <span style={{ fontSize: '1.2rem' }}>{finalPrice} TL</span>
+                                    <div style={{ marginTop: '15px', color: '#4ade80', fontSize: '0.9rem', fontWeight: 'bold', padding: '10px', border: '1px dashed #4ade80', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>İndirim Tutarı:</span>
+                                        <span style={{ fontSize: '1.1rem' }}>-{discountAmount} TL</span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setAppliedCampaign(null)}
+                                        style={{ marginTop: '15px', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                    >
+                                        Farklı bir indirim kodu kullanmak istiyorum
+                                    </button>
                                 </div>
+                            ) : (
+                                <>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Tag size={16} /> İndirim Kodu
+                                    </label>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                            type="text"
+                                            value={discountCode}
+                                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                                            placeholder="Kodunuz var mı?"
+                                            className="form-input"
+                                            style={{ flex: 1 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleApplyDiscount}
+                                            className="btn btn-outline"
+                                            disabled={!discountCode || appliedCampaign}
+                                        >
+                                            {appliedCampaign ? 'Uygulandı' : 'Uygula'}
+                                        </button>
+                                    </div>
+
+                                    {discountError && (
+                                        <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>{discountError}</p>
+                                    )}
+
+                                    {appliedCampaign && (
+                                        <div style={{ marginTop: '15px', color: '#4ade80', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                                            ✅ "{appliedCampaign.code}" uygulandı! <br />
+                                            <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginRight: '10px' }}>{basePrice} TL</span>
+                                            <span style={{ fontSize: '1.2rem' }}>{finalPrice} TL</span>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
 

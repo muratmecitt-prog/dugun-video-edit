@@ -331,8 +331,9 @@ export default function AdminDashboard() {
                 discount_value: Number(newCampaign.discount_value),
                 min_order_count: Number(newCampaign.min_order_count),
                 usage_limit: newCampaign.usage_limit ? Number(newCampaign.usage_limit) : null,
-                start_date: newCampaign.start_date || null,
-                end_date: newCampaign.end_date || null
+                // Convert local input time to UTC ISO string for correct comparison
+                start_date: newCampaign.start_date ? new Date(newCampaign.start_date).toISOString() : new Date().toISOString(),
+                end_date: newCampaign.end_date ? new Date(newCampaign.end_date).toISOString() : null
             };
 
             const { data, error } = await supabase.from('campaigns').insert([payload]).select();
