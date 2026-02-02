@@ -49,10 +49,22 @@ function NewOrderForm() {
 
             if (data && data.length > 0) {
                 setPackages(data);
-                // Default to first package if not set
-                // We construct the string to match PriceCard format: "PAKET 1 — Name (Price TL)"
-                // But wait, we need to check URL param first
             }
+
+            // Check for Auto-Apply Campaigns
+            const { data: campaignsData } = await supabase
+                .from('campaigns')
+                .select('*')
+                .eq('is_active', true)
+                .eq('is_auto_apply', true)
+                .lte('start_date', new Date().toISOString())
+                .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
+                .order('created_at', { ascending: false });
+
+            if (campaignsData && campaignsData.length > 0) {
+                setAppliedCampaign(campaignsData[0]);
+            }
+
             setLoadingPackages(false);
         };
         fetchPackages();

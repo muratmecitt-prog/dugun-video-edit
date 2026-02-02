@@ -6,20 +6,36 @@ import { Loader2 } from 'lucide-react';
 
 export default function PackagesPage() {
     const [packages, setPackages] = useState([]);
+    const [activeCampaign, setActiveCampaign] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPackages = async () => {
-            const { data, error } = await supabase
+        const fetchData = async () => {
+            // Fetch Packages
+            const { data: packagesData } = await supabase
                 .from('packages')
                 .select('*')
                 .eq('is_active', true)
                 .order('display_order', { ascending: true });
 
-            if (data) setPackages(data);
+            // Fetch Auto-Apply Campaigns
+            const { data: campaignsData } = await supabase
+                .from('campaigns')
+                .select('*')
+                .eq('is_active', true)
+                .eq('is_auto_apply', true)
+                .lte('start_date', new Date().toISOString()) // Started
+                .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`) // Not ended
+                .order('created_at', { ascending: false });
+
+            if (packagesData) setPackages(packagesData);
+            if (campaignsData && campaignsData.length > 0) {
+                // Pick the most recent active auto-apply campaign
+                setActiveCampaign(campaignsData[0]);
+            }
             setLoading(false);
         };
-        fetchPackages();
+        fetchData();
     }, []);
 
     if (loading) {
@@ -37,6 +53,11 @@ export default function PackagesPage() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>
                     İhtiyacınıza uygun paketi seçin, profesyonel kurgunun keyfini çıkarın.
                 </p>
+                {activeCampaign && (
+                    <div style={{ marginTop: '20px', display: 'inline-block', backgroundColor: '#eab308', color: 'black', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold' }}>
+                        🔥 {activeCampaign.name} Devam Ediyor!
+                    </div>
+                )}
             </div>
 
             <div style={{
@@ -44,18 +65,38 @@ export default function PackagesPage() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
                 gap: '20px'
             }}>
-                {packages.map((pkg) => (
-                    <PriceCard
-                        key={pkg.id}
-                        title={pkg.name}
-                        price={pkg.price.toLocaleString('tr-TR')}
-                        duration={pkg.duration}
-                        features={pkg.features}
-                        deliveryTime={pkg.delivery_time}
-                        displayOrder={pkg.display_order}
-                        isPopular={pkg.name.includes('Teaser + Klip')} // Simple logic for now
-                    />
-                ))}
+                {packages.map((pkg) => {
+                    let finalPrice = pkg.price;
+                    let originalPrice = null;
+                    let badgeText = null;
+
+                    if (activeCampaign) {
+                        originalPrice = pkg.price;
+                        let discountAmount = 0;
+                        if (activeCampaign.discount_type === 'PERCENTAGE') {
+                            discountAmount = (pkg.price * activeCampaign.discount_value) / 100;
+                        } else {
+                            discountAmount = activeCampaign.discount_value;
+                        }
+                        finalPrice = Math.max(0, pkg.price - discountAmount);
+                        badgeText = activeCampaign.badge_text || `%${activeCampaign.discount_value} İNDİRİM`;
+                    }
+
+                    return (
+                        <PriceCard
+                            key={pkg.id}
+                            title={pkg.name}
+                            price={finalPrice.toLocaleString('tr-TR')}
+                            originalPrice={originalPrice ? originalPrice.toLocaleString('tr-TR') : null}
+                            badgeText={badgeText}
+                            duration={pkg.duration}
+                            features={pkg.features}
+                            deliveryTime={pkg.delivery_time}
+                            displayOrder={pkg.display_order}
+                            isPopular={pkg.name.includes('Teaser + Klip')}
+                        />
+                    );
+                })}
             </div>
         </div>
     );

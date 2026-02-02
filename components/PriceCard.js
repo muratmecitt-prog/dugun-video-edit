@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 
-export default function PriceCard({ title, price, duration, features, deliveryTime, isPopular, displayOrder }) {
+export default function PriceCard({ title, price, originalPrice, badgeText, duration, features, deliveryTime, isPopular, displayOrder }) {
     const { user } = useAuth();
 
     // Generate dynamic package name: "PAKET 1 — Teaser (2.000 TL)"
+    // If discounted, show the final price in the name
     const fullPackageName = `PAKET ${displayOrder} — ${title} (${price} TL)`;
 
     const targetHref = user
@@ -43,9 +44,31 @@ export default function PriceCard({ title, price, duration, features, deliveryTi
                 </span>
             )}
 
+            {/* Campaign Badge */}
+            {badgeText && (
+                <span style={{
+                    position: 'absolute',
+                    top: '-12px',
+                    left: '20px',
+                    backgroundColor: '#eab308', // Yellow/Gold
+                    color: 'black',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    zIndex: 10,
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                }}>
+                    {badgeText}
+                </span>
+            )}
+
             <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '10px' }}>{title}</h3>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginBottom: '20px' }}>
-                <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{price} TL</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '2rem', fontWeight: 'bold', color: badgeText ? '#ef4444' : 'var(--primary)' }}>{price} TL</span>
+                {originalPrice && (
+                    <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '1.2rem' }}>{originalPrice} TL</span>
+                )}
             </div>
 
             {duration && (

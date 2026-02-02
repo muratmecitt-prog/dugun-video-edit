@@ -26,7 +26,8 @@ export default function AdminDashboard() {
     const [editingPackage, setEditingPackage] = useState(null); // The package object being edited
     const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
     const [newCampaign, setNewCampaign] = useState({
-        name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: ''
+        name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: '',
+        is_auto_apply: false, badge_text: '', start_date: '', end_date: ''
     });
 
     // Form States
@@ -329,7 +330,9 @@ export default function AdminDashboard() {
                 ...newCampaign,
                 discount_value: Number(newCampaign.discount_value),
                 min_order_count: Number(newCampaign.min_order_count),
-                usage_limit: newCampaign.usage_limit ? Number(newCampaign.usage_limit) : null
+                usage_limit: newCampaign.usage_limit ? Number(newCampaign.usage_limit) : null,
+                start_date: newCampaign.start_date || null,
+                end_date: newCampaign.end_date || null
             };
 
             const { data, error } = await supabase.from('campaigns').insert([payload]).select();
@@ -337,7 +340,10 @@ export default function AdminDashboard() {
 
             setCampaigns([data[0], ...campaigns]);
             setIsCampaignModalOpen(false);
-            setNewCampaign({ name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: '' });
+            setNewCampaign({
+                name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: '',
+                is_auto_apply: false, badge_text: '', start_date: '', end_date: ''
+            });
             showToast('Kampanya oluşturuldu.', 'success');
         } catch (err) {
             showToast('Hata: ' + err.message, 'error');
@@ -741,8 +747,9 @@ export default function AdminDashboard() {
                             <thead>
                                 <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                     <th style={{ padding: '16px' }}>Kampanya Adı</th>
-                                    <th style={{ padding: '16px' }}>Kod</th>
+                                    <th style={{ padding: '16px' }}>Kod / Rozet</th>
                                     <th style={{ padding: '16px' }}>İndirim</th>
+                                    <th style={{ padding: '16px' }}>Tip</th>
                                     <th style={{ padding: '16px' }}>Kullanım</th>
                                     <th style={{ padding: '16px' }}>Durum</th>
                                     <th style={{ padding: '16px' }}>İşlem</th>
@@ -752,8 +759,14 @@ export default function AdminDashboard() {
                                 {campaigns.map(cmp => (
                                     <tr key={cmp.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                                         <td style={{ padding: '16px', fontWeight: 'bold' }}>{cmp.name}</td>
-                                        <td style={{ padding: '16px' }}><code style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px' }}>{cmp.code}</code></td>
+                                        <td style={{ padding: '16px' }}>
+                                            <code style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px' }}>{cmp.code}</code>
+                                            {cmp.badge_text && <div style={{ fontSize: '0.75rem', marginTop: '4px', color: '#eab308' }}>🏷 {cmp.badge_text}</div>}
+                                        </td>
                                         <td style={{ padding: '16px' }}>{cmp.discount_type === 'PERCENTAGE' ? `%${cmp.discount_value}` : `${cmp.discount_value} TL`}</td>
+                                        <td style={{ padding: '16px' }}>
+                                            {cmp.is_auto_apply ? <span className="badge" style={{ backgroundColor: '#dbeafe', color: '#1e40af' }}>Otomatik</span> : 'Kupon'}
+                                        </td>
                                         <td style={{ padding: '16px' }}>{cmp.used_count} / {cmp.usage_limit || '∞'}</td>
                                         <td style={{ padding: '16px' }}>
                                             <button
@@ -872,20 +885,39 @@ function EditPackageModal({ pkg, onClose, onSave, setEditingPackage }) {
 function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
     return (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-            <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '500px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '90vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Yeni Kampanya</h3>
                     <button onClick={onClose}><X /></button>
                 </div>
                 <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <div>
-                        <label className="form-label">Kampanya Adı (Admin)</label>
-                        <input className="form-input" value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} placeholder="Örn: Açılış İndirimi" required />
+                    <div style={{ padding: '10px', backgroundColor: 'var(--background)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={newCampaign.is_auto_apply}
+                                onChange={e => setNewCampaign({ ...newCampaign, is_auto_apply: e.target.checked })}
+                                id="isAutoApply"
+                                style={{ width: '20px', height: '20px' }}
+                            />
+                            <label htmlFor="isAutoApply" style={{ fontWeight: 'bold', fontSize: '1rem' }}>Otomatik Uygula (Auto-Apply)</label>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Seçilirse, müşteriler kod girmeden bu indirimi otomatik kazanır. Site genelinde fiyatlar çizili gösterilir.
+                        </p>
                     </div>
-                    <div>
-                        <label className="form-label">İndirim Kodu</label>
-                        <input className="form-input" value={newCampaign.code} onChange={e => setNewCampaign({ ...newCampaign, code: e.target.value.toUpperCase() })} placeholder="Örn: YENI20" required />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div>
+                            <label className="form-label">Kampanya Adı (Admin)</label>
+                            <input className="form-input" value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} placeholder="Örn: Yaz İndirimi" required />
+                        </div>
+                        <div>
+                            <label className="form-label">İndirim Kodu</label>
+                            <input className="form-input" value={newCampaign.code} onChange={e => setNewCampaign({ ...newCampaign, code: e.target.value.toUpperCase() })} placeholder="Örn: YAZ20" required />
+                        </div>
                     </div>
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                         <div>
                             <label className="form-label">İndirim Tipi</label>
@@ -899,17 +931,33 @@ function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
                             <input className="form-input" type="number" value={newCampaign.discount_value} onChange={e => setNewCampaign({ ...newCampaign, discount_value: e.target.value })} placeholder="20 veya 500" required />
                         </div>
                     </div>
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div>
+                            <label className="form-label">Rozet Metni (Opsiyonel)</label>
+                            <input className="form-input" value={newCampaign.badge_text} onChange={e => setNewCampaign({ ...newCampaign, badge_text: e.target.value })} placeholder="Örn: %20 İNDİRİM" />
+                        </div>
                         <div>
                             <label className="form-label">Min. Sipariş (Opsiyonel)</label>
                             <input className="form-input" type="number" value={newCampaign.min_order_count} onChange={e => setNewCampaign({ ...newCampaign, min_order_count: e.target.value })} placeholder="0" />
-                            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>İlk X sipariş için geçerli</p>
-                        </div>
-                        <div>
-                            <label className="form-label">Limit (Opsiyonel)</label>
-                            <input className="form-input" type="number" value={newCampaign.usage_limit} onChange={e => setNewCampaign({ ...newCampaign, usage_limit: e.target.value })} placeholder="Sınırsız" />
                         </div>
                     </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div>
+                            <label className="form-label">Başlangıç Tarihi</label>
+                            <input className="form-input" type="datetime-local" value={newCampaign.start_date || ''} onChange={e => setNewCampaign({ ...newCampaign, start_date: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="form-label">Bitiş Tarihi</label>
+                            <input className="form-input" type="datetime-local" value={newCampaign.end_date || ''} onChange={e => setNewCampaign({ ...newCampaign, end_date: e.target.value })} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="form-label">Kullanım Limiti (Opsiyonel)</label>
+                        <input className="form-input" type="number" value={newCampaign.usage_limit} onChange={e => setNewCampaign({ ...newCampaign, usage_limit: e.target.value })} placeholder="Sınırsız" />
+                    </div>
+
                     <button type="submit" className="btn btn-primary">Oluştur</button>
                 </form>
             </div>
