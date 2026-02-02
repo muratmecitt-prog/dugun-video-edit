@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, Calendar, Package, ExternalLink, Loader2, Video, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
-export default function CustomerDetailPage({ params }) {
+export default function CustomerDetailPage() {
+    const params = useParams();
     const { id } = params;
     const { user } = useAuth();
     const router = useRouter();
@@ -44,8 +45,7 @@ export default function CustomerDetailPage({ params }) {
             const { data: ordersData, error: ordersError } = await supabase
                 .from('orders')
                 .select('*')
-                .eq('user_id', id)
-                .order('created_at', { ascending: false });
+                .eq('user_id', id);
 
             if (ordersError) throw ordersError;
 
