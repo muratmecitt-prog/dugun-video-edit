@@ -5,31 +5,33 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
 import { sendNotificationEmail, templates } from '@/lib/emailService';
-import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
-import { ExternalLink, Save, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Youtube, Link as LinkIcon } from 'lucide-react';
+import { ExternalLink, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Link as LinkIcon, Users, Package } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
     const { showToast } = useToast();
     const router = useRouter();
-    const [orders, setOrders] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [updatingId, setUpdatingId] = useState(null);
-    const [saveStatus, setSaveStatus] = useState({}); // { orderId: 'success' | 'error' | null }
-    const [viewingRevision, setViewingRevision] = useState(null);
-    const [enlargedImage, setEnlargedImage] = useState(null); // Full-page image zoom
-    const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('Siparişler');
-    const [profiles, setProfiles] = useState([]);
 
-    // Security Check: Only allow if email matches owner
+    // Data States
+    const [orders, setOrders] = useState([]);
+    const [profiles, setProfiles] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // UI States
+    const [activeMainTab, setActiveMainTab] = useState('Siparişler'); // 'Siparişler' | 'Müşteriler'
+    const [activeOrderFilter, setActiveOrderFilter] = useState('Hepsi'); // 'Hepsi' | 'Ödeme Bekleniyor' etc.
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Action States
+    const [updatingId, setUpdatingId] = useState(null);
+    const [saveStatus, setSaveStatus] = useState({});
+    const [viewingRevision, setViewingRevision] = useState(null);
+    const [enlargedImage, setEnlargedImage] = useState(null);
+
     useEffect(() => {
         if (isLoading) return;
-
-        // ONLY redirect if we HAVE a user but they are NOT an admin
-        // If user is null (signing out), let AuthProvider handle the redirect to home
         const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
         if (user && !isAdmin) {
             router.push('/panel');
@@ -48,28 +50,29 @@ export default function AdminDashboard() {
 
             if (fetchError) throw fetchError;
 
-            // Fetch emails/phones from profiles to show in admin
-            // Fetch profile data (studio name, email, phone) to show live data in admin
-            const userIds = [...new Set(ordersData.map(o => o.user_id))];
-            const { data: profilesData } = await supabase
+            // Fetch profiles
+            const { data: profilesData, error: profilesError } = await supabase
                 .from('profiles')
-                .select('id, phone, email, studio_name')
-                .in('id', userIds);
+                .select('*')
+                .order('created_at', { ascending: false });
 
+            if (profilesError) throw profilesError;
+
+            // Enrich orders with profile data
             const enrichedOrders = ordersData.map(order => {
                 const profile = profilesData?.find(p => p.id === order.user_id);
                 return {
                     ...order,
                     phone: profile?.phone || 'Yok',
                     email: profile?.email || 'Yok',
-                    // Resilience: Check profile first, then order record, finally 'Bilinmiyor'
                     studio_name: profile?.studio_name || order.studio_name || 'Bilinmiyor'
                 };
             });
 
             setOrders(enrichedOrders);
+            setProfiles(profilesData || []);
         } catch (err) {
-            console.error('Error fetching admin orders:', err.message);
+            console.error('Error fetching admin data:', err.message);
             setError(err.message);
         } finally {
             setIsLoading(false);
@@ -81,7 +84,7 @@ export default function AdminDashboard() {
         if (user && isAdmin) {
             fetchData();
         } else if (user && !isAdmin) {
-            setIsLoading(false); // Stop loading so security check can redirect
+            setIsLoading(false);
         }
     }, [user]);
 
@@ -93,7 +96,6 @@ export default function AdminDashboard() {
                 updated_at: new Date().toISOString()
             };
 
-            // If status is becoming 'Tamamlandı', set completed_at
             if (updates.status === 'Tamamlandı') {
                 updatePayload.completed_at = new Date().toISOString();
             }
@@ -105,15 +107,10 @@ export default function AdminDashboard() {
 
             if (error) throw error;
 
-            // Update local state
             setOrders(orders.map(o => o.id === orderId ? { ...o, ...updatePayload } : o));
-
-            // Show success briefly
-            // Informational toast
-            showToast('Sipariş başarıyla güncellendi.', 'success');
+            showToast('Sipariş güncellendi.', 'success');
             setSaveStatus({ ...saveStatus, [orderId]: 'success' });
 
-            // Send notification email to user if status changed
             if (updates.status) {
                 const order = orders.find(o => o.id === orderId);
                 sendNotificationEmail(templates.USER_STATUS_UPDATE, {
@@ -129,37 +126,29 @@ export default function AdminDashboard() {
             }, 3000);
 
         } catch (err) {
-            console.error('Update error:', err.message);
-            showToast('Güncelleme hatası: ' + err.message, 'error');
+            showToast('Hata: ' + err.message, 'error');
         } finally {
             setUpdatingId(null);
         }
     };
 
     const handleDeleteOrder = async (orderId) => {
-        if (!confirm('Bu siparişi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
-
+        if (!confirm('Bu siparişi silmek istediğinize emin misiniz?')) return;
         setUpdatingId(orderId);
         try {
-            const { error } = await supabase
-                .from('orders')
-                .delete()
-                .eq('id', orderId);
-
+            const { error } = await supabase.from('orders').delete().eq('id', orderId);
             if (error) throw error;
-
             showToast('Sipariş silindi.', 'success');
             setOrders(orders.filter(o => o.id !== orderId));
         } catch (err) {
-            console.error('Delete error:', err.message);
-            showToast('Silme hatası: ' + err.message, 'error');
+            showToast('Hata: ' + err.message, 'error');
         } finally {
             setUpdatingId(null);
         }
     };
 
-    // Calculate counts for tabs
-    const counts = {
+    // Filters
+    const orderCounts = {
         'Hepsi': orders.length,
         'Ödeme Bekleniyor': orders.filter(o => o.status === 'Ödeme Bekleniyor').length,
         'Kurguda': orders.filter(o => o.status === 'Kurguda').length,
@@ -167,7 +156,7 @@ export default function AdminDashboard() {
         'Tamamlandı': orders.filter(o => o.status === 'Tamamlandı').length,
     };
 
-    const searchFiltered = orders.filter(order => {
+    const searchFilteredOrders = orders.filter(order => {
         const searchStr = searchTerm.toLowerCase();
         return (
             order.id.toLowerCase().includes(searchStr) ||
@@ -178,202 +167,166 @@ export default function AdminDashboard() {
         );
     });
 
-    const finalOrders = activeTab === 'Hepsi'
-        ? searchFiltered
-        : searchFiltered.filter(o => o.status === activeTab);
+    const finalOrders = activeOrderFilter === 'Hepsi'
+        ? searchFilteredOrders
+        : searchFilteredOrders.filter(o => o.status === activeOrderFilter);
 
-    if (isLoading) {
+    const searchFilteredProfiles = profiles.filter(profile => {
+        const searchStr = searchTerm.toLowerCase();
         return (
-            <div className="container section" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', flexDirection: 'column', gap: '20px' }}>
-                <Loader2 className="animate-spin" size={48} color="var(--primary)" />
-                <p>Veriler yükleniyor...</p>
-            </div>
+            (profile.studio_name || '').toLowerCase().includes(searchStr) ||
+            (profile.email || '').toLowerCase().includes(searchStr) ||
+            (profile.phone || '').toLowerCase().includes(searchStr)
         );
-    }
+    });
 
-    if (!user) return null; // Final safety for sign-out flicker
-
-    const isAdmin = user?.email?.toLowerCase() === 'muratmecitt@gmail.com';
-
-    if (!isAdmin) {
-        return (
-            <div className="container section" style={{ textAlign: 'center', padding: '100px 20px' }}>
-                <h1 style={{ color: '#ef4444' }}>⚠️ Yetkisiz Erişim</h1>
-                <p style={{ marginTop: '20px' }}>Bu sayfayı görmeye yetkiniz bulunmamaktadır.</p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '10px' }}>Giriş Yapılan Email: {user?.email || 'Giriş yapılmadı'}</p>
-                <Link href="/panel" className="btn btn-primary" style={{ marginTop: '30px' }}>Panele Dön</Link>
-            </div>
-        );
-    }
+    if (isLoading) return <div className="container section center"><Loader2 className="animate-spin" /></div>;
+    if (!user || user?.email?.toLowerCase() !== 'muratmecitt@gmail.com') return null;
 
     return (
         <div className="container section">
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Admin Paneli</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tüm siparişleri yönetin (Giriş: {user?.email})</p>
+                    <p style={{ color: 'var(--text-secondary)' }}>Yönetim Paneli</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                     <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Toplam Sipariş</div>
                         <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{orders.length}</div>
                     </div>
-                    <button onClick={signOut} className="btn btn-outline" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <LogOut size={18} /> Çıkış
-                    </button>
+                    <button onClick={signOut} className="btn btn-outline"><LogOut size={18} /> Çıkış</button>
                 </div>
             </div>
 
-            <div style={{ marginBottom: '30px', position: 'relative' }}>
+            {/* Main Tabs */}
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', borderBottom: '1px solid var(--border)' }}>
+                <button
+                    onClick={() => setActiveMainTab('Siparişler')}
+                    style={{
+                        padding: '10px 20px',
+                        borderBottom: activeMainTab === 'Siparişler' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeMainTab === 'Siparişler' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        background: 'none',
+                        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                        cursor: 'pointer', fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <Package size={20} /> Siparişler
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('Müşteriler')}
+                    style={{
+                        padding: '10px 20px',
+                        borderBottom: activeMainTab === 'Müşteriler' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeMainTab === 'Müşteriler' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        background: 'none',
+                        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                        cursor: 'pointer', fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <Users size={20} /> Müşteriler <span className="badge">{profiles.length}</span>
+                </button>
+            </div>
+
+            {/* Search */}
+            <div style={{ marginBottom: '20px', position: 'relative' }}>
                 <Search style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={20} />
                 <input
                     type="text"
-                    placeholder="Sipariş No, Stüdyo veya Çift İsmi ile ara..."
+                    placeholder={activeMainTab === 'Siparişler' ? "Sipariş No, Stüdyo, İsim ara..." : "Stüdyo, Email, Telefon ara..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{
-                        width: '100%',
-                        padding: '12px 12px 12px 45px',
-                        backgroundColor: 'var(--surface)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius)',
-                        color: 'var(--text-main)',
-                        fontSize: '1rem',
-                        outline: 'none',
-                        transition: 'border-color 0.2s'
+                        width: '100%', padding: '12px 12px 12px 45px',
+                        backgroundColor: 'var(--surface)', border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)', color: 'var(--text-main)', fontSize: '1rem', outline: 'none'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
                 />
             </div>
 
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', overflowX: 'auto', paddingBottom: '5px' }}>
-                {Object.keys(counts).map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        style={{
-                            padding: '10px 20px',
-                            borderRadius: '30px',
-                            border: '1px solid var(--border)',
-                            backgroundColor: activeTab === tab ? 'var(--primary)' : 'var(--surface)',
-                            color: activeTab === tab ? 'white' : 'var(--text-main)',
-                            fontSize: '0.9rem',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            whiteSpace: 'nowrap',
-                            transition: 'all 0.2s',
-                            boxShadow: activeTab === tab ? '0 4px 12px rgba(var(--primary-rgb), 0.3)' : 'none'
-                        }}
-                    >
-                        {tab}
-                        <span style={{
-                            backgroundColor: activeTab === tab ? 'rgba(255,255,255,0.2)' : 'var(--background)',
-                            padding: '2px 8px',
-                            borderRadius: '10px',
-                            fontSize: '0.75rem'
-                        }}>
-                            {counts[tab]}
-                        </span>
-                    </button>
-                ))}
-            </div>
-
-            {error && (
-                <div style={{ padding: '20px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 'var(--radius)', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '30px' }}>
-                    <h3 style={{ fontWeight: 'bold', marginBottom: '8px' }}>Bağlantı Hatası:</h3>
-                    <p style={{ fontSize: '0.95rem' }}>{error}</p>
-                    <button onClick={fetchData} className="btn btn-outline" style={{ marginTop: '15px', padding: '5px 15px' }}>Tekrar Dene</button>
+            {/* Sub Tabs (Only for Orders) */}
+            {activeMainTab === 'Siparişler' && (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', overflowX: 'auto', paddingBottom: '5px' }}>
+                    {Object.keys(orderCounts).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveOrderFilter(tab)}
+                            style={{
+                                padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--border)',
+                                backgroundColor: activeOrderFilter === tab ? 'var(--surface-hover)' : 'var(--surface)',
+                                color: activeOrderFilter === tab ? 'var(--primary)' : 'var(--text-secondary)',
+                                fontSize: '0.85rem', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {tab}
+                            <span style={{ backgroundColor: 'var(--background)', padding: '1px 6px', borderRadius: '8px', fontSize: '0.7rem' }}>
+                                {orderCounts[tab]}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             )}
 
-            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                            <th style={{ padding: '16px' }}>Sipariş No</th>
-                            <th style={{ padding: '16px' }}>Stüdyo Bilgileri</th>
-                            <th style={{ padding: '16px' }}>Müşteri (Çift)</th>
-                            <th style={{ padding: '16px' }}>Paket</th>
-                            <th style={{ padding: '16px' }}>Ham Dosya</th>
-                            <th style={{ padding: '16px' }}>Durum</th>
-                            <th style={{ padding: '16px' }}>Teslimat Linki</th>
-                            <th style={{ padding: '16px' }}>İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {finalOrders.length > 0 ? (
-                            finalOrders.map((order) => (
+            {/* ERROR View */}
+            {error && (
+                <div style={{ padding: '20px', backgroundColor: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 'var(--radius)', marginBottom: '20px' }}>
+                    <p>{error}</p>
+                    <button onClick={fetchData} className="btn btn-outline" style={{ marginTop: '10px' }}>Tekrar Dene</button>
+                </div>
+            )}
+
+            {/* CONTENT: Orders */}
+            {activeMainTab === 'Siparişler' && (
+                <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1000px' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                <th style={{ padding: '16px' }}>Sipariş No</th>
+                                <th style={{ padding: '16px' }}>Stüdyo</th>
+                                <th style={{ padding: '16px' }}>Çift</th>
+                                <th style={{ padding: '16px' }}>Paket</th>
+                                <th style={{ padding: '16px' }}>Ham Dosya</th>
+                                <th style={{ padding: '16px' }}>Durum</th>
+                                <th style={{ padding: '16px' }}>Teslimat</th>
+                                <th style={{ padding: '16px' }}>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {finalOrders.length > 0 ? finalOrders.map(order => (
                                 <tr key={order.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                                     <td style={{ padding: '16px' }}>
                                         <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{order.id}</div>
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(order.created_at).toLocaleDateString('tr-TR')}</div>
                                     </td>
                                     <td style={{ padding: '16px' }}>
-                                        <Link
-                                            href={`/admin/musteri/${order.user_id}`}
-                                            style={{ display: 'block', textDecoration: 'none', transition: 'opacity 0.2s' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                                        >
-                                            <div style={{ fontWeight: '500', color: 'var(--text-main)', borderBottom: '1px solid transparent' }}>{order.studio_name}</div>
-                                            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{order.email}</div>
-                                        </Link>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '4px' }}>📞 {order.phone}</div>
+                                        <Link href={`/admin/musteri/${order.user_id}`} style={{ fontWeight: '500' }}>{order.studio_name}</Link>
                                     </td>
                                     <td style={{ padding: '16px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <div style={{ fontWeight: '500', color: 'var(--text-main)' }}>{order.couple_name}</div>
-                                            {(order.revision_text || (order.revision_items && order.revision_items.length > 0)) && (
-                                                <button
-                                                    onClick={() => setViewingRevision(order)}
-                                                    style={{
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '6px',
-                                                        fontSize: '0.75rem',
-                                                        color: '#a855f7',
-                                                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                                                        padding: '4px 8px',
-                                                        borderRadius: '4px',
-                                                        border: '1px solid rgba(168, 85, 247, 0.2)',
-                                                        cursor: 'pointer',
-                                                        width: 'fit-content',
-                                                        marginTop: '4px'
-                                                    }}
-                                                >
-                                                    <StickyNote size={12} />
-                                                    Revize Notu Var
-                                                </button>
-                                            )}
-                                        </div>
+                                        {order.couple_name}
+                                        {(order.revision_text || order.revision_items?.length > 0) && (
+                                            <button onClick={() => setViewingRevision(order)} style={{ display: 'block', marginTop: '5px', fontSize: '0.75rem', color: '#a855f7', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                                                📝 Revize Notu
+                                            </button>
+                                        )}
                                     </td>
+                                    <td style={{ padding: '16px' }}><span style={{ fontSize: '0.85rem' }}>{order.package}</span></td>
                                     <td style={{ padding: '16px' }}>
-                                        <span style={{ fontSize: '0.85rem' }}>{order.package.split('—')[1] || order.package}</span>
-                                    </td>
-                                    <td style={{ padding: '16px' }}>
-                                        <a href={order.wt_link} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--primary)', fontWeight: '500', fontSize: '0.9rem' }}>
+                                        <a href={order.wt_link} target="_blank" style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                             <ExternalLink size={14} /> Aç
                                         </a>
                                     </td>
                                     <td style={{ padding: '16px' }}>
                                         <select
-                                            defaultValue={order.status}
+                                            value={order.status}
                                             onChange={(e) => handleUpdateOrder(order.id, { status: e.target.value })}
+                                            style={{ padding: '6px', borderRadius: '4px', backgroundColor: 'var(--background)', color: 'var(--text-main)', border: '1px solid var(--border)' }}
                                             disabled={updatingId === order.id}
-                                            style={{
-                                                padding: '6px 10px',
-                                                borderRadius: '6px',
-                                                backgroundColor: 'var(--background)',
-                                                color: 'var(--text-main)',
-                                                border: '1px solid var(--border)',
-                                                fontSize: '0.85rem',
-                                                cursor: 'pointer'
-                                            }}
                                         >
                                             <option value="Ödeme Bekleniyor">Ödeme Bekleniyor</option>
                                             <option value="Kurguda">Kurguda</option>
@@ -384,250 +337,107 @@ export default function AdminDashboard() {
                                     <td style={{ padding: '16px' }}>
                                         <input
                                             type="text"
-                                            placeholder="İndirme linkini yapıştır..."
                                             defaultValue={order.download_link || ''}
-                                            onBlur={(e) => {
-                                                if (e.target.value !== (order.download_link || '')) {
-                                                    handleUpdateOrder(order.id, { download_link: e.target.value });
-                                                }
-                                            }}
-                                            style={{
-                                                width: '180px',
-                                                padding: '6px 10px',
-                                                backgroundColor: 'var(--background)',
-                                                border: '1px solid var(--border)',
-                                                borderRadius: '4px',
-                                                color: 'var(--text-main)',
-                                                fontSize: '0.85rem'
-                                            }}
+                                            onBlur={(e) => e.target.value !== (order.download_link || '') && handleUpdateOrder(order.id, { download_link: e.target.value })}
+                                            placeholder="Link yapıştır"
+                                            style={{ width: '150px', padding: '6px', borderRadius: '4px', backgroundColor: 'var(--background)', color: 'var(--text-main)', border: '1px solid var(--border)' }}
                                         />
                                     </td>
                                     <td style={{ padding: '16px' }}>
-                                        {updatingId === order.id ? (
-                                            <Loader2 className="animate-spin" size={18} color="var(--primary)" />
-                                        ) : (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                {saveStatus[order.id] === 'success' ? (
-                                                    <span style={{ color: '#4ade80', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                                                        <Check size={16} />
-                                                    </span>
-                                                ) : (
-                                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Kayıtlı</span>
-                                                )}
-                                                <button
-                                                    onClick={() => handleDeleteOrder(order.id)}
-                                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '5px' }}
-                                                    title="Siparişi Sil"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        )}
+                                        <button onClick={() => handleDeleteOrder(order.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="7" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                    Henüz hiç sipariş bulunmuyor.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            {/* Revision Viewer Modal */}
-            {viewingRevision && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-                    <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                        <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(168, 85, 247, 0.1)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <MessageSquare color="#a855f7" />
-                                <h3 style={{ fontWeight: 'bold' }}>Revize Detayları - #{viewingRevision.id}</h3>
-                            </div>
-                            <button onClick={() => setViewingRevision(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div style={{ padding: '30px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-
-                            {/* Customer Identity Section */}
-                            <div style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.05)', padding: '15px', borderRadius: 'var(--radius)', border: '1px dashed var(--border)' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>Stüdyo / Çift</div>
-                                        <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{viewingRevision.studio_name}</div>
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{viewingRevision.couple_name}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '4px' }}>İletişim</div>
-                                        <div style={{ fontWeight: '500', display: 'flex', alignItems: 'center', gap: '5px' }}>📞 {viewingRevision.phone}</div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{viewingRevision.email}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* NEW Structured Revision Items */}
-                            {viewingRevision.revision_items && viewingRevision.revision_items.length > 0 && (
-                                <div>
-                                    <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Revize Maddeleri ({viewingRevision.revision_items.length})</h4>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                        {viewingRevision.revision_items.map((item, idx) => (
-                                            <div key={idx} style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
-                                                    {item.type === 'image' ? <ImageIcon size={16} color="var(--primary)" /> : <LinkIcon size={16} color="#a855f7" />}
-                                                    <span style={{ fontWeight: 'bold', fontSize: '0.8rem', textTransform: 'uppercase', color: item.type === 'image' ? 'var(--primary)' : '#a855f7' }}>
-                                                        {item.type === 'image' ? 'Görüntü Revizesi' : 'Müzik/Link Revizesi'}
-                                                    </span>
-                                                </div>
-
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                                    {item.type === 'image' && item.value && (
-                                                        <div
-                                                            onClick={() => setEnlargedImage(item.value)}
-                                                            title="Büyütmek için tıkla"
-                                                            style={{
-                                                                borderRadius: 'var(--radius)',
-                                                                overflow: 'hidden',
-                                                                border: '1px solid var(--border)',
-                                                                backgroundColor: 'var(--surface)',
-                                                                maxWidth: '300px',
-                                                                cursor: 'zoom-in'
-                                                            }}
-                                                        >
-                                                            <img src={item.value} alt="Revision" style={{ width: '100%', display: 'block' }} />
-                                                        </div>
-                                                    )}
-
-                                                    {item.type === 'link' && item.value && (
-                                                        <a href={item.value} target="_blank" className="btn btn-outline" style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '8px', color: '#a855f7', borderColor: '#a855f7' }}>
-                                                            <LinkIcon size={16} /> Linki Aç
-                                                        </a>
-                                                    )}
-
-                                                    {item.text && (
-                                                        <div style={{ fontSize: '0.95rem', lineHeight: '1.6', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
-                                                            {item.text}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                            )) : (
+                                <tr><td colSpan="8" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Sipariş bulunamadı.</td></tr>
                             )}
-
-                            {/* BACKWARD COMPATIBILITY: Legacy Revision Data */}
-                            {!viewingRevision.revision_items?.length && (
-                                <>
-                                    {viewingRevision.revision_text && (
-                                        <div>
-                                            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Müşteri Talebi</h4>
-                                            <div style={{ backgroundColor: 'var(--background)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-                                                {viewingRevision.revision_text}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {viewingRevision.revision_link && (
-                                        <div>
-                                            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Referans / Müzik Linki</h4>
-                                            <a
-                                                href={viewingRevision.revision_link}
-                                                target="_blank"
-                                                className="btn btn-outline"
-                                                style={{ display: 'flex', alignItems: 'center', gap: '10px', width: 'fit-content', color: 'var(--primary)' }}
-                                            >
-                                                <Youtube size={18} />
-                                                Linki Aç
-                                            </a>
-                                        </div>
-                                    )}
-
-                                    {((viewingRevision.revision_images && viewingRevision.revision_images.length > 0) || viewingRevision.revision_image) && (
-                                        <div>
-                                            <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                Ekran Görüntüleri ({viewingRevision.revision_images?.length || 1})
-                                            </h4>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
-                                                {viewingRevision.revision_images?.map((img, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        onClick={() => setEnlargedImage(img)}
-                                                        title="Büyütmek için tıkla"
-                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', aspectRatio: '16/9', cursor: 'zoom-in' }}
-                                                    >
-                                                        <img
-                                                            src={img}
-                                                            alt={`Revision screenshot ${idx + 1}`}
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                                        />
-                                                    </div>
-                                                ))}
-                                                {!viewingRevision.revision_images?.length && viewingRevision.revision_image && (
-                                                    <div
-                                                        onClick={() => setEnlargedImage(viewingRevision.revision_image)}
-                                                        title="Büyütmek için tıkla"
-                                                        style={{ borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid var(--border)', backgroundColor: 'var(--background)', aspectRatio: '16/9', cursor: 'zoom-in' }}
-                                                    >
-                                                        <img
-                                                            src={viewingRevision.revision_image}
-                                                            alt="Revision screenshot"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-
-                        <div style={{ padding: '20px', backgroundColor: 'var(--background)', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
-                            <button onClick={() => setViewingRevision(null)} className="btn btn-primary">Anladım</button>
-                        </div>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             )}
 
-            {/* Image Zoom Modal (Full screen) */}
+            {/* CONTENT: Customers */}
+            {activeMainTab === 'Müşteriler' && (
+                <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                <th style={{ padding: '16px' }}>Stüdyo Adı</th>
+                                <th style={{ padding: '16px' }}>Ad Soyad</th>
+                                <th style={{ padding: '16px' }}>İletişim</th>
+                                <th style={{ padding: '16px' }}>Kayıt</th>
+                                <th style={{ padding: '16px' }}>Sipariş</th>
+                                <th style={{ padding: '16px' }}>İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {searchFilteredProfiles.length > 0 ? searchFilteredProfiles.map(profile => (
+                                <tr key={profile.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                    <td style={{ padding: '16px', fontWeight: 'bold' }}>{profile.studio_name}</td>
+                                    <td style={{ padding: '16px' }}>{profile.full_name || '-'}</td>
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{ fontSize: '0.9rem' }}>{profile.email}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{profile.phone}</div>
+                                    </td>
+                                    <td style={{ padding: '16px' }}>{new Date(profile.created_at).toLocaleDateString()}</td>
+                                    <td style={{ padding: '16px' }}>
+                                        <span className="badge">{orders.filter(o => o.user_id === profile.id).length} Adet</span>
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        <Link href={`/admin/musteri/${profile.id}`} className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>Detay</Link>
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr><td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Kayıt bulunamadı.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Modals */}
+            {viewingRevision && (
+                <RevisionModal revision={viewingRevision} onClose={() => setViewingRevision(null)} setEnlargedImage={setEnlargedImage} />
+            )}
+
             {enlargedImage && (
-                <div
-                    onClick={() => setEnlargedImage(null)}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.9)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        zIndex: 2000,
-                        cursor: 'zoom-out',
-                        padding: '40px'
-                    }}
-                >
-                    <button
-                        onClick={() => setEnlargedImage(null)}
-                        style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '10px', borderRadius: '50%', cursor: 'pointer' }}
-                    >
-                        <X size={30} />
-                    </button>
-                    <img
-                        src={enlargedImage}
-                        alt="Enlarged"
-                        style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 0 50px rgba(0,0,0,0.5)', borderRadius: '4px' }}
-                    />
+                <div onClick={() => setEnlargedImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img src={enlargedImage} style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
                 </div>
             )}
 
             <style jsx>{`
                 .container { max-width: 1400px; margin: 0 auto; }
+                .center { display: flex; justify-content: center; alignItems: center; min-height: 60vh; }
+                .badge { background-color: var(--surface); padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; border: 1px solid var(--border); }
             `}</style>
+        </div>
+    );
+}
+
+// Extracted Modal Component for cleaner code
+function RevisionModal({ revision, onClose, setEnlargedImage }) {
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+            <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', maxHeight: '90vh', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3>Revize Talebi</h3>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)' }}><X /></button>
+                </div>
+                <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+                    {/* Reuse the logic from before for displaying items */}
+                    {revision.revision_items?.map((item, idx) => (
+                        <div key={idx} style={{ marginBottom: '20px', padding: '15px', backgroundColor: 'var(--background)', borderRadius: '8px' }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: '10px', color: 'var(--primary)' }}>
+                                {item.type === 'image' ? 'Görüntü' : 'Link'}
+                            </div>
+                            {item.type === 'image' && <img src={item.value} onClick={() => setEnlargedImage(item.value)} style={{ maxWidth: '100%', cursor: 'zoom-in' }} />}
+                            {item.type === 'link' && <a href={item.value} target="_blank" style={{ color: '#a855f7', display: 'flex', alignItems: 'center', gap: '5px' }}><LinkIcon size={16} /> Linki Aç</a>}
+                            <p style={{ marginTop: '10px' }}>{item.text}</p>
+                        </div>
+                    ))}
+                    {!revision.revision_items && <p>{revision.revision_text}</p>}
+                </div>
+            </div>
         </div>
     );
 }
