@@ -3,6 +3,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/components/Providers';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -67,6 +68,7 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <GoogleAnalytics GA_MEASUREMENT_ID="G-M4LYZRLM1Q" />
         <Providers>
           <Navbar />
           <main style={{ flex: 1 }}>
