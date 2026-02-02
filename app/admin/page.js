@@ -6,7 +6,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/components/Toast';
 import { sendNotificationEmail, templates } from '@/lib/emailService';
 import Link from 'next/link';
-import { ExternalLink, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Link as LinkIcon, Users, Package } from 'lucide-react';
+import { ExternalLink, Loader2, LogOut, Check, Search, Trash2, MessageSquare, StickyNote, X, Image as ImageIcon, Link as LinkIcon, Users, Package, Play, Plus } from 'lucide-react';
 
 export default function AdminDashboard() {
     const { user, signOut } = useAuth();
@@ -16,6 +16,7 @@ export default function AdminDashboard() {
     // Data States
     const [orders, setOrders] = useState([]);
     const [profiles, setProfiles] = useState([]);
+    const [portfolio, setPortfolio] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -57,6 +58,14 @@ export default function AdminDashboard() {
 
             if (profilesError) throw profilesError;
 
+            // Fetch portfolio
+            const { data: portfolioData, error: portfolioError } = await supabase
+                .from('portfolio')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (portfolioError) throw portfolioError;
+
             // Enrich orders with profile data
             const enrichedOrders = ordersData.map(order => {
                 const profile = profilesData?.find(p => p.id === order.user_id);
@@ -70,6 +79,7 @@ export default function AdminDashboard() {
 
             setOrders(enrichedOrders);
             setProfiles(profilesData || []);
+            setPortfolio(portfolioData || []);
         } catch (err) {
             console.error('Error fetching admin data:', err.message);
             setError(err.message);
@@ -143,6 +153,37 @@ export default function AdminDashboard() {
             showToast('Hata: ' + err.message, 'error');
         } finally {
             setUpdatingId(null);
+        }
+    };
+
+    const handleAddPortfolio = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const title = formData.get('title');
+        const video_url = formData.get('video_url');
+
+        if (!title || !video_url) return;
+
+        try {
+            const { data, error } = await supabase.from('portfolio').insert([{ title, video_url }]).select();
+            if (error) throw error;
+            setPortfolio([data[0], ...portfolio]);
+            showToast('Video portfolyoya eklendi.', 'success');
+            e.target.reset();
+        } catch (err) {
+            showToast('Ekleme hatası: ' + err.message, 'error');
+        }
+    };
+
+    const handleDeletePortfolio = async (id) => {
+        if (!confirm('Bu videoyu portfolyodan silmek istiyor musunuz?')) return;
+        try {
+            const { error } = await supabase.from('portfolio').delete().eq('id', id);
+            if (error) throw error;
+            setPortfolio(portfolio.filter(p => p.id !== id));
+            showToast('Video silindi.', 'success');
+        } catch (err) {
+            showToast('Silme hatası: ' + err.message, 'error');
         }
     };
 
@@ -230,6 +271,21 @@ export default function AdminDashboard() {
                     }}
                 >
                     <Users size={20} /> Müşteriler <span className="badge">{profiles.length}</span>
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('Portfolyo')}
+                    style={{
+                        padding: '10px 20px',
+                        borderBottom: activeMainTab === 'Portfolyo' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeMainTab === 'Portfolyo' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        background: 'none',
+                        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                        cursor: 'pointer', fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <Play size={20} /> Portfolyo <span className="badge">{portfolio.length}</span>
                 </button>
             </div>
 
@@ -390,6 +446,38 @@ export default function AdminDashboard() {
                             )}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* CONTENT: Portfolio */}
+            {activeMainTab === 'Portfolyo' && (
+                <div>
+                    <div style={{ backgroundColor: 'var(--surface)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: '30px' }}>
+                        <h3 style={{ marginBottom: '15px', fontWeight: 'bold' }}>Yeni Video Ekle</h3>
+                        <form onSubmit={handleAddPortfolio} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                            <input name="title" required placeholder="Video Başlığı (Örn: Ayşe & Ahmet Düğün Klibi)" style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }} />
+                            <input name="video_url" required placeholder="Video Linki (YouTube/Vimeo)" style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }} />
+                            <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Plus size={20} /> Ekle</button>
+                        </form>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                        {portfolio.map(item => (
+                            <div key={item.id} style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                <div style={{ padding: '15px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <div style={{ fontWeight: 'bold' }}>{item.title}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>{new Date(item.created_at).toLocaleDateString()}</div>
+                                    </div>
+                                    <button onClick={() => handleDeletePortfolio(item.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                </div>
+                                <div style={{ padding: '15px' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.video_url}</div>
+                                    <a href={item.video_url} target="_blank" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center', width: '100%', gap: '8px' }}><Play size={16} /> İzle</a>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
