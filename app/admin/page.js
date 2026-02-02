@@ -37,6 +37,10 @@ export default function AdminDashboard() {
     const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
     const [newFaq, setNewFaq] = useState({ question: '', answer: '', display_order: 0, is_active: true });
 
+    // Site Settings State
+    const [siteSettings, setSiteSettings] = useState(null);
+    const [settingsLoading, setSettingsLoading] = useState(false);
+
     // Form States
     const [newTitle, setNewTitle] = useState('');
     const [newVideoUrl, setNewVideoUrl] = useState('');
@@ -146,6 +150,33 @@ export default function AdminDashboard() {
                 if (!error) faqsData = data;
             } catch (faqErr) {
                 console.warn('FAQ fetch failed (table might be missing):', faqErr);
+            }
+
+            // Fetch Site Settings
+            try {
+                const { data: settingsData, error: settingsError } = await supabase
+                    .from('site_settings')
+                    .select('*')
+                    .eq('key', 'home_config')
+                    .single();
+
+                if (settingsData) {
+                    setSiteSettings(settingsData.value);
+                } else {
+                    // Default init if doesn't exist
+                    const defaultConfig = {
+                        scrollSensitivity: 1500,
+                        zoomLevel: 1.1,
+                        transitionDuration: 700,
+                        overlayOpacity: 0.7,
+                        blurAmount: 5,
+                        steps: [], // Will be filled by default if empty
+                        scenes: []
+                    };
+                    setSiteSettings(defaultConfig);
+                }
+            } catch (settingsErr) {
+                console.warn('Settings fetch failed:', settingsErr);
             }
 
             // Enrich orders with profile data
@@ -494,6 +525,31 @@ export default function AdminDashboard() {
     };
 
     // Filters
+    const handleSaveSettings = async () => {
+        if (!siteSettings) return;
+        setSettingsLoading(true);
+        try {
+            const { error } = await supabase
+                .from('site_settings')
+                .upsert({
+                    key: 'home_config',
+                    value: siteSettings,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'key' });
+
+            if (error) throw error;
+            showToast('Ayarlar kaydedildi.', 'success');
+        } catch (err) {
+            showToast('Kayıt hatası: ' + err.message, 'error');
+        } finally {
+            setSettingsLoading(false);
+        }
+    };
+
+    const updateSetting = (key, value) => {
+        setSiteSettings(prev => ({ ...prev, [key]: value }));
+    };
+
     const orderCounts = {
         'Hepsi': orders.length,
         'Ödeme Bekleniyor': orders.filter(o => o.status === 'Ödeme Bekleniyor').length,
@@ -525,6 +581,51 @@ export default function AdminDashboard() {
             (profile.phone || '').toLowerCase().includes(searchStr)
         );
     });
+
+    const handleResetDefaults = () => {
+        if (!confirm('Tüm ayarları varsayılan fabrika ayarlarına döndürmek istediğinize emin misiniz?')) return;
+
+        const factoryDefaults = {
+            scrollSensitivity: 1500,
+            zoomLevel: 1.1,
+            transitionDuration: 700,
+            overlayOpacity: 0.7,
+            blurAmount: 5,
+            scenes: [
+                {
+                    id: 1,
+                    type: 'card',
+                    title: '1. Dosyalarını Yükle',
+                    desc: 'Ham görüntülerinizi WeTransfer veya Google Drive üzerinden bize gönderin.',
+                    img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600'
+                },
+                {
+                    id: 2,
+                    type: 'card',
+                    title: '2. Profesyonel Kurgu',
+                    desc: 'Uzman ekibimiz görüntülerinizi sinematik filme dönüştürsün.',
+                    img: 'https://images.unsplash.com/photo-1574717432741-9346d6d43329?auto=format&fit=crop&q=80&w=1600'
+                },
+                {
+                    id: 3,
+                    type: 'card',
+                    title: '3. Revize & Onay',
+                    desc: 'Taslağı izleyin, beğenmediğiniz yerleri panelden saniye saniye not edin.',
+                    img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1600'
+                },
+                {
+                    id: 4,
+                    type: 'card',
+                    title: '4. Teslimat',
+                    desc: 'Final filminizi 4K kalitesinde indirin ve sosyal medyada paylaşın.',
+                    img: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=1600'
+                }
+            ]
+        };
+
+        setSiteSettings(factoryDefaults);
+        showToast('Ayarlar varsayılana döndü. Kaydetmeyi unutmayın!', 'info');
+    };
 
     if (isLoading) return <div className="container section center"><Loader2 className="animate-spin" /></div>;
     if (!user || user?.email?.toLowerCase() !== 'muratmecitt@gmail.com') return null;
@@ -637,6 +738,21 @@ export default function AdminDashboard() {
                     }}
                 >
                     <MessageSquare size={20} /> S.S.S.
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('Site Ayarları')}
+                    style={{
+                        padding: '10px 20px',
+                        borderBottom: activeMainTab === 'Site Ayarları' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeMainTab === 'Site Ayarları' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        background: 'none',
+                        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                        cursor: 'pointer', fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <Edit size={20} /> Site Ayarları
                 </button>
             </div>
 
@@ -1062,6 +1178,166 @@ export default function AdminDashboard() {
                 </div>
             )}
 
+            {/* CONTENT: Site Settings */}
+            {activeMainTab === 'Site Ayarları' && siteSettings && (
+                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px', gap: '10px' }}>
+                        <button
+                            onClick={handleResetDefaults}
+                            disabled={settingsLoading}
+                            className="btn btn-outline"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', borderColor: '#ef4444', color: '#ef4444' }}
+                        >
+                            <Trash2 size={20} />
+                            Varsayılana Dön
+                        </button>
+                        <button
+                            onClick={handleSaveSettings}
+                            disabled={settingsLoading}
+                            className="btn btn-primary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            {settingsLoading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                            Değişiklikleri Kaydet
+                        </button>
+                    </div>
+
+                    {/* Section 1: Animation & Design */}
+                    <div className="glass-card" style={{ padding: '30px', borderRadius: '12px', marginBottom: '30px', backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>Animasyon & Tasarım</h2>
+
+                        <div style={{ display: 'grid', gap: '25px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Akış Hızı (Scroll Sensitivity)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <input
+                                        type="range" min="800" max="3000" step="100"
+                                        value={siteSettings.scrollSensitivity || 1500}
+                                        onChange={(e) => updateSetting('scrollSensitivity', parseInt(e.target.value))}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <span style={{ width: '60px', textAlign: 'right', fontWeight: 'bold' }}>{siteSettings.scrollSensitivity}px</span>
+                                </div>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '5px' }}>Değer ne kadar artarsa sayfa o kadar yavaş kayar.</p>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Zoom Oranı (Apple Effect)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <input
+                                        type="range" min="1" max="2" step="0.1"
+                                        value={siteSettings.zoomLevel || 1.1}
+                                        onChange={(e) => updateSetting('zoomLevel', parseFloat(e.target.value))}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <span style={{ width: '60px', textAlign: 'right', fontWeight: 'bold' }}>x{siteSettings.zoomLevel}</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Geçiş Süresi (Ms)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <input
+                                        type="range" min="300" max="2000" step="100"
+                                        value={siteSettings.transitionDuration || 700}
+                                        onChange={(e) => updateSetting('transitionDuration', parseInt(e.target.value))}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <span style={{ width: '60px', textAlign: 'right', fontWeight: 'bold' }}>{siteSettings.transitionDuration}ms</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Siyahlık Opaklığı (Overlay)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <input
+                                        type="range" min="0" max="1" step="0.1"
+                                        value={siteSettings.overlayOpacity === undefined ? 0.7 : siteSettings.overlayOpacity}
+                                        onChange={(e) => updateSetting('overlayOpacity', parseFloat(e.target.value))}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <span style={{ width: '60px', textAlign: 'right', fontWeight: 'bold' }}>%{Math.round((siteSettings.overlayOpacity || 0.7) * 100)}</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Bulanıklık (Blur)</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <input
+                                        type="range" min="0" max="20" step="1"
+                                        value={siteSettings.blurAmount === undefined ? 5 : siteSettings.blurAmount}
+                                        onChange={(e) => updateSetting('blurAmount', parseInt(e.target.value))}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <span style={{ width: '60px', textAlign: 'right', fontWeight: 'bold' }}>{siteSettings.blurAmount}px</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Section 2: Content Steps */}
+                    <div className="glass-card" style={{ padding: '30px', borderRadius: '12px', marginBottom: '30px', backgroundColor: 'var(--surface)', border: '1px solid var(--border)' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>Sayfa İçeriği: Nasıl Çalışır?</h2>
+
+                        {siteSettings.scenes && siteSettings.scenes.filter(s => s.type === 'card').map((scene, idx) => (
+                            <div key={scene.id} style={{ marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid var(--border-light)' }}>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '15px', color: 'var(--primary)' }}>Adım {idx + 1}</h3>
+
+                                <div style={{ display: 'grid', gap: '15px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px', color: 'var(--text-secondary)' }}>Başlık</label>
+                                        <input
+                                            type="text"
+                                            value={scene.title}
+                                            onChange={(e) => {
+                                                const newScenes = [...siteSettings.scenes];
+                                                const targetIndex = newScenes.findIndex(s => s.id === scene.id);
+                                                newScenes[targetIndex] = { ...newScenes[targetIndex], title: e.target.value };
+                                                updateSetting('scenes', newScenes);
+                                            }}
+                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--background)', color: 'white' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px', color: 'var(--text-secondary)' }}>Açıklama</label>
+                                        <textarea
+                                            value={scene.desc}
+                                            onChange={(e) => {
+                                                const newScenes = [...siteSettings.scenes];
+                                                const targetIndex = newScenes.findIndex(s => s.id === scene.id);
+                                                newScenes[targetIndex] = { ...newScenes[targetIndex], desc: e.target.value };
+                                                updateSetting('scenes', newScenes);
+                                            }}
+                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--background)', color: 'white', minHeight: '80px' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px', color: 'var(--text-secondary)' }}>Görsel URL</label>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input
+                                                type="text"
+                                                value={scene.img}
+                                                onChange={(e) => {
+                                                    const newScenes = [...siteSettings.scenes];
+                                                    const targetIndex = newScenes.findIndex(s => s.id === scene.id);
+                                                    newScenes[targetIndex] = { ...newScenes[targetIndex], img: e.target.value };
+                                                    updateSetting('scenes', newScenes);
+                                                }}
+                                                style={{ flex: 1, padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--background)', color: 'white' }}
+                                            />
+                                            {scene.img && (
+                                                <a href={scene.img} target="_blank" style={{ padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-secondary)' }}>
+                                                    <ExternalLink size={18} />
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
             {/* Modals */}
             {isCampaignModalOpen && (
                 <NewCampaignModal

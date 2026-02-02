@@ -41,68 +41,160 @@ export default function Home() {
     return url;
   };
 
-  // Configuration for the 3D Scenes
-  const SCENE_HEIGHT = 1500;
-  const TRANSITION_DURATION = 800;
+  // Site Settings & Configuration
+  const [siteSettings, setSiteSettings] = useState(null);
 
-  const scenes = [
-    {
-      id: 'hero',
-      type: 'intro',
-      startScroll: 0,
-      endScroll: SCENE_HEIGHT
-    },
+  // Default values (fallback)
+  const defaultScenes = [
+    { id: 'hero', type: 'intro' },
     {
       id: 'fcp',
       type: 'card',
       img: '/fcp-interface.png',
       title: 'İşinizi Büyütmeye Odaklanın',
       desc: "Siz çekin, biz kurgulayalım. Türkiye'nin profesyonelleri için\nhızlı, standart ve kaliteli video edit hizmeti.",
-      btnText: 'Hemen Başlayın',
-      startScroll: 0,
-      endScroll: SCENE_HEIGHT * 2
+      btnText: 'Hemen Başlayın'
     },
     {
       id: 'step1',
       type: 'card',
       img: '/step1_v2.png',
       title: '1. Videolarınızı Yükleyin',
-      desc: 'Ham görüntülerinizi WeTransfer veya Google Drive ile kolayca bize gönderin.',
-      startScroll: SCENE_HEIGHT * 1.5,
-      endScroll: SCENE_HEIGHT * 3
+      desc: 'Ham görüntülerinizi WeTransfer veya Google Drive ile kolayca bize gönderin.'
     },
     {
       id: 'step2',
       type: 'card',
       img: '/step2.png',
       title: '2. Profesyonel Kurgu',
-      desc: 'Uzman ekibimiz görüntülerinizi sinematik filme dönüştürsün.',
-      startScroll: SCENE_HEIGHT * 2.5,
-      endScroll: SCENE_HEIGHT * 4
+      desc: 'Uzman ekibimiz görüntülerinizi sinematik filme dönüştürsün.'
     },
     {
       id: 'step3',
       type: 'card',
       img: '/step3.png',
       title: '3. Revize Edin',
-      desc: 'Hazırlanan taslağı izleyin, panel üzerinden anlık geri bildirim verin.',
-      startScroll: SCENE_HEIGHT * 3.5,
-      endScroll: SCENE_HEIGHT * 5
+      desc: 'Hazırlanan taslağı izleyin, panel üzerinden anlık geri bildirim verin.'
     },
     {
       id: 'step4',
       type: 'card',
       img: '/step4_v2.png',
       title: '4. Teslim Alın',
-      desc: 'Kusursuz hale gelen videonuzu 4K kalitesinde indirin ve çiftlerinize teslim edin.',
-      // No CTA here, it will be in the Packages section
-      startScroll: SCENE_HEIGHT * 4.5,
-      endScroll: SCENE_HEIGHT * 6
+      desc: 'Kusursuz hale gelen videonuzu 4K kalitesinde indirin ve çiftlerinize teslim edin.'
     }
   ];
 
+  // Fetch Settings on Mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase.from('site_settings').select('*').eq('key', 'home_config').single();
+      if (data && data.value) {
+        setSiteSettings(data.value);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Use Dynamic or Default Values
+  const SCENE_HEIGHT = siteSettings?.scrollSensitivity || 1500;
+  // TRANSITION_DURATION is passed to child, defined there or prop-drilled? 
+  // Better to pass it as prop or context. For now we will handle it in the scenes mapping.
+
+  // Construct Scenes Array dynamically
+  // If settings exist, use them to build scenes. Otherwise use default.
+  let scenesPayload = [];
+
+  if (siteSettings && siteSettings.scenes && siteSettings.scenes.length > 0) {
+    scenesPayload = [
+      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
+      // Map DB scenes to local structure efficiently
+      ...siteSettings.scenes.map((s, i) => ({
+        ...s,
+        type: 'card', // Ensure type is set
+        startScroll: SCENE_HEIGHT * (i + 1), // 0 is hero, 1 is first card (fcp logic adaptation required?)
+        // Wait, the original had FCP card as index 0 of cards, but index 1 of all scenes.
+        // Let's stick to the list order.
+        // Logic: Hero is 0-1. Cards are 1-2, 2-3 etc.
+        startScroll: SCENE_HEIGHT * (i + 1),
+        endScroll: SCENE_HEIGHT * (i + 2)
+        // Note: The original generic list had 5 cards (FCP + 4 steps).
+        // The default DB payload has 4 steps.
+        // If user wants FCP card, it should be in DB or hardcoded as first?
+        // Let's assume the DB 'scenes' replaces the content cards.
+        // If FCP card is special, we might need to preserve it or add it to DB defaults.
+        // For now, let's map exactly what's in DB to be safe and flexible.
+      }))
+    ];
+    // Adjust scroll ranges
+    scenesPayload = [
+      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
+      ...siteSettings.scenes.slice(0, 10).map((s, i) => ({ // Safe limit
+        ...s,
+        type: 'card',
+        startScroll: SCENE_HEIGHT * (i + 1),
+        endScroll: SCENE_HEIGHT * (i + 2)
+      }))
+    ];
+  } else {
+    // Fallback to hardcoded
+    scenesPayload = [
+      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
+      {
+        ...defaultScenes[1],
+        startScroll: 0,
+        endScroll: SCENE_HEIGHT * 2
+        // Original FCP logic was weird (Start 0, End 2*H). 
+        // It overlapped with Hero? No, ThreeDCard logic handles visibility.
+        // Let's keep original logic for fallback if possible, OR
+        // standardise it. 
+        // Standard approach: 
+        // Scene 0 (Hero): 0 -> H
+        // Scene 1 (Card 1): H -> 2H (e.g.)
+      },
+      ...defaultScenes.slice(2).map((s, i) => ({
+        ...s,
+        startScroll: SCENE_HEIGHT * (1.5 + i), // Original offset logic
+        endScroll: SCENE_HEIGHT * (3 + i)
+      }))
+    ];
+    // actually, to avoid breaking the delicate FCP card sync, let's just use the original hardcoded array for fallback exactly as it was.
+    scenesPayload = [
+      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
+      { ...defaultScenes[1], startScroll: 0, endScroll: SCENE_HEIGHT * 2 },
+      { ...defaultScenes[2], startScroll: SCENE_HEIGHT * 1.5, endScroll: SCENE_HEIGHT * 3 },
+      { ...defaultScenes[3], startScroll: SCENE_HEIGHT * 2.5, endScroll: SCENE_HEIGHT * 4 },
+      { ...defaultScenes[4], startScroll: SCENE_HEIGHT * 3.5, endScroll: SCENE_HEIGHT * 5 },
+      { ...defaultScenes[5], startScroll: SCENE_HEIGHT * 4.5, endScroll: SCENE_HEIGHT * 6 },
+    ];
+  }
+
+  // Simplify: If DB settings exist, use uniform stacking. 
+  // If not, use the "legacy" hardcoded stack which had custom offsets (1.5, etc).
+  // The DB version will be cleaner: Card N is at N*H to (N+1)*H.
+  if (siteSettings?.scenes?.length > 0) {
+    scenesPayload = [
+      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
+      ...siteSettings.scenes.map((s, i) => ({
+        ...s,
+        type: 'card',
+        startScroll: SCENE_HEIGHT * (0 + i), // First card starts emerging immediately/overlapping hero?
+        // Original FCP card started at 0.
+        // Let's try to replicate the "flow".
+        // Hero keeps user busy till SCENE_HEIGHT.
+        // First card should appear around SCENE_HEIGHT.
+        startScroll: SCENE_HEIGHT * (0.5 + i), // Slight overlap
+        endScroll: SCENE_HEIGHT * (2 + i)
+      }))
+    ];
+  }
+
+  const scenes = scenesPayload;
+
   // Calculate opacity for the Packages section (Fades in after the last scene)
-  const packagesStart = SCENE_HEIGHT * 5.5;
+  // Dynamic calculation based on total scenes
+  const lastSceneEnd = scenes[scenes.length - 1].endScroll;
+  const packagesStart = lastSceneEnd - 500; // Fade in slightly before end
   const packagesOpacity = typeof window !== 'undefined'
     ? Math.min(1, Math.max(0, (scrollY - packagesStart) / 800))
     : 0;
@@ -280,6 +372,7 @@ export default function Home() {
               startScroll={scene.startScroll}
               endScroll={scene.endScroll}
               index={index}
+              config={siteSettings} // Pass full config
             />
           ))}
 
@@ -362,8 +455,11 @@ export default function Home() {
   );
 }
 
-function ThreeDCard({ img, title, desc, btnText, scrollY, startScroll, endScroll, index }) {
-  const TRANSITION_DURATION = 700;
+function ThreeDCard({ img, title, desc, btnText, scrollY, startScroll, endScroll, index, config }) {
+  const TRANSITION_DURATION = config?.transitionDuration || 700;
+  const ZOOM_LEVEL = config?.zoomLevel || 1.1;
+  const OVERLAY_OPACITY_MAX = config?.overlayOpacity || 0.7;
+  const BLUR_AMOUNT = config?.blurAmount || 5;
 
   const enterStart = startScroll;
   const enterEnd = startScroll + TRANSITION_DURATION;
@@ -385,21 +481,21 @@ function ThreeDCard({ img, title, desc, btnText, scrollY, startScroll, endScroll
     opacity = Math.min(1, 0.2 + easeOut * 0.8);
     const translateY = 600 - (easeOut * 600);
     const rotateX = 40 - (easeOut * 40);
-    const scale = 0.6 + (easeOut * 0.5);
+    const scale = 0.6 + (easeOut * (ZOOM_LEVEL - 0.6)); // Dynamic Max Zoom
     transform = `translateY(${translateY}px) rotateX(${rotateX}deg) scale(${scale})`;
 
-    overlayOpacity = Math.max(0, (p - 0.6) / 0.4);
+    overlayOpacity = Math.max(0, (p - 0.6) / 0.4) * OVERLAY_OPACITY_MAX;
   } else if (scrollY >= enterEnd && scrollY < exitStart) {
     opacity = 1;
-    transform = 'translateY(0px) rotateX(0deg) scale(1.1)';
-    overlayOpacity = 1;
+    transform = `translateY(0px) rotateX(0deg) scale(${ZOOM_LEVEL})`; // Dynamic Max Zoom
+    overlayOpacity = OVERLAY_OPACITY_MAX;
   } else if (scrollY >= exitStart && scrollY < exitEnd) {
     const p = (scrollY - exitStart) / (exitEnd - exitStart);
     opacity = 1 - p;
     const translateY = 0 - (p * 300);
-    const scale = 1.1 - (p * 0.3);
+    const scale = ZOOM_LEVEL - (p * 0.3); // Dynamic Decay
     transform = `translateY(${translateY}px) scale(${scale})`;
-    overlayOpacity = 1 - p * 1.5;
+    overlayOpacity = (1 - p * 1.5) * OVERLAY_OPACITY_MAX;
   } else {
     opacity = 0;
     transform = 'translateY(-300px) scale(0.8)';
@@ -453,7 +549,7 @@ function ThreeDCard({ img, title, desc, btnText, scrollY, startScroll, endScroll
           alignItems: 'center',
           justifyContent: 'center',
           background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(5px)',
+          backdropFilter: `blur(${BLUR_AMOUNT}px)`,
           opacity: overlayOpacity,
           transition: 'opacity 0.1s linear',
           textAlign: 'center',
