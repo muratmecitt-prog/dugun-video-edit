@@ -108,33 +108,31 @@ export default function Home() {
   if (siteSettings && siteSettings.scenes && siteSettings.scenes.length > 0) {
     scenesPayload = [
       { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
-      // Map DB scenes to local structure efficiently
-      ...siteSettings.scenes.map((s, i) => ({
-        ...s,
-        type: 'card', // Ensure type is set
-        startScroll: SCENE_HEIGHT * (i + 1), // 0 is hero, 1 is first card (fcp logic adaptation required?)
-        // Wait, the original had FCP card as index 0 of cards, but index 1 of all scenes.
-        // Let's stick to the list order.
-        // Logic: Hero is 0-1. Cards are 1-2, 2-3 etc.
-        startScroll: SCENE_HEIGHT * (i + 1),
-        endScroll: SCENE_HEIGHT * (i + 2)
-        // Note: The original generic list had 5 cards (FCP + 4 steps).
-        // The default DB payload has 4 steps.
-        // If user wants FCP card, it should be in DB or hardcoded as first?
-        // Let's assume the DB 'scenes' replaces the content cards.
-        // If FCP card is special, we might need to preserve it or add it to DB defaults.
-        // For now, let's map exactly what's in DB to be safe and flexible.
-      }))
-    ];
-    // Adjust scroll ranges
-    scenesPayload = [
-      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
-      ...siteSettings.scenes.slice(0, 10).map((s, i) => ({ // Safe limit
-        ...s,
-        type: 'card',
-        startScroll: SCENE_HEIGHT * (i + 1),
-        endScroll: SCENE_HEIGHT * (i + 2)
-      }))
+      ...siteSettings.scenes.map((s, i) => {
+        // Replicating the original specific offsets:
+        // Card 0 (FCP): Start 0, End 2H
+        // Card 1 (Step 1): Start 1.5H, End 3H
+        // Card 2 (Step 2): Start 2.5H, End 4H
+        // ...
+
+        let start, end;
+        if (i === 0) {
+          start = 0;
+          end = SCENE_HEIGHT * 2;
+        } else {
+          // For i=1 -> 1.5H
+          // For i=2 -> 2.5H
+          start = SCENE_HEIGHT * (0.5 + i);
+          end = SCENE_HEIGHT * (2 + i);
+        }
+
+        return {
+          ...s,
+          type: 'card',
+          startScroll: start,
+          endScroll: end
+        };
+      })
     ];
   } else {
     // Fallback to hardcoded
