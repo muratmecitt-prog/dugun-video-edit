@@ -209,6 +209,8 @@ export default function AdminDashboard() {
                         recipient: recipientEmail,    // Common
                         reply_to: recipientEmail,     // Common
                         order_id: orderId,
+                        couple_name: order.couple_name,
+                        studio_name: order.studio_name,
                         status: updates.status,
                         download_link: updates.download_link || order.download_link || ''
                     });
