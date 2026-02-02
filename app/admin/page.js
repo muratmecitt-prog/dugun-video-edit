@@ -24,6 +24,7 @@ export default function AdminDashboard() {
 
     // Package & Campaign States
     const [editingPackage, setEditingPackage] = useState(null); // The package object being edited
+    const [editingCampaign, setEditingCampaign] = useState(null);
     const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
     const [newCampaign, setNewCampaign] = useState({
         name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: '',
@@ -336,19 +337,59 @@ export default function AdminDashboard() {
                 end_date: newCampaign.end_date ? new Date(newCampaign.end_date).toISOString() : null
             };
 
-            const { data, error } = await supabase.from('campaigns').insert([payload]).select();
+            let error;
+            let data;
+
+            if (editingCampaign) {
+                // Update existing
+                const { data: updatedData, error: updateError } = await supabase
+                    .from('campaigns')
+                    .update(payload)
+                    .eq('id', editingCampaign.id)
+                    .select();
+                error = updateError;
+                data = updatedData;
+
+                if (!error) {
+                    setCampaigns(campaigns.map(c => c.id === editingCampaign.id ? data[0] : c));
+                    showToast('Kampanya güncellendi.', 'success');
+                }
+            } else {
+                // Create new
+                const { data: newData, error: insertError } = await supabase.from('campaigns').insert([payload]).select();
+                error = insertError;
+                data = newData;
+
+                if (!error) {
+                    setCampaigns([data[0], ...campaigns]);
+                    showToast('Kampanya oluşturuldu.', 'success');
+                }
+            }
+
             if (error) throw error;
 
-            setCampaigns([data[0], ...campaigns]);
             setIsCampaignModalOpen(false);
+            setEditingCampaign(null);
             setNewCampaign({
                 name: '', code: '', discount_type: 'PERCENTAGE', discount_value: '', min_order_count: 0, usage_limit: '',
                 is_auto_apply: false, badge_text: '', start_date: '', end_date: ''
             });
-            showToast('Kampanya oluşturuldu.', 'success');
+
         } catch (err) {
             showToast('Hata: ' + err.message, 'error');
         }
+    };
+
+    const openEditCampaignModal = (campaign) => {
+        setEditingCampaign(campaign);
+        setNewCampaign({
+            ...campaign,
+            // Format dates for datetime-local input (YYYY-MM-DDTHH:MM)
+            start_date: campaign.start_date ? new Date(campaign.start_date).toISOString().slice(0, 16) : '',
+            end_date: campaign.end_date ? new Date(campaign.end_date).toISOString().slice(0, 16) : '',
+            is_indefinite: !campaign.end_date
+        });
+        setIsCampaignModalOpen(true);
     };
 
     const handleToggleCampaign = async (id, currentStatus) => {
@@ -741,8 +782,8 @@ export default function AdminDashboard() {
                             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Site genelindeki indirimleri ve özel kupon kodlarını buradan yönetebilirsiniz.</p>
                         </div>
                         <div style={{ display: 'flex', gap: '10px' }}>
-                            <button onClick={() => { setNewCampaign({ ...newCampaign, is_auto_apply: true, code: 'OTOMATIK_' + Date.now().toString().slice(-4), badge_text: 'FIRSAT' }); setIsCampaignModalOpen(true); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#eab308', color: 'black', border: 'none' }}><Gift size={20} /> Yeni Genel Kampanya</button>
-                            <button onClick={() => { setNewCampaign({ ...newCampaign, is_auto_apply: false, code: '', badge_text: '' }); setIsCampaignModalOpen(true); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Tag size={20} /> Yeni Kupon Kodu</button>
+                            <button onClick={() => { setEditingCampaign(null); setNewCampaign({ ...newCampaign, is_auto_apply: true, code: 'OTOMATIK_' + Date.now().toString().slice(-4), badge_text: 'FIRSAT' }); setIsCampaignModalOpen(true); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#eab308', color: 'black', border: 'none' }}><Gift size={20} /> Yeni Genel Kampanya</button>
+                            <button onClick={() => { setEditingCampaign(null); setNewCampaign({ ...newCampaign, is_auto_apply: false, code: '', badge_text: '' }); setIsCampaignModalOpen(true); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Tag size={20} /> Yeni Kupon Kodu</button>
                         </div>
                     </div>
 
@@ -781,7 +822,8 @@ export default function AdminDashboard() {
                                                         {cmp.is_active ? 'Aktif' : 'Pasif'}
                                                     </button>
                                                 </td>
-                                                <td style={{ padding: '16px' }}>
+                                                <td style={{ padding: '16px', display: 'flex', gap: '10px' }}>
+                                                    <button onClick={() => openEditCampaignModal(cmp)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}><Edit size={18} /></button>
                                                     <button onClick={() => handleDeleteCampaign(cmp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                 </td>
                                             </tr>
@@ -826,7 +868,8 @@ export default function AdminDashboard() {
                                                         {cmp.is_active ? 'Aktif' : 'Pasif'}
                                                     </button>
                                                 </td>
-                                                <td style={{ padding: '16px' }}>
+                                                <td style={{ padding: '16px', display: 'flex', gap: '10px' }}>
+                                                    <button onClick={() => openEditCampaignModal(cmp)} style={{ color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer' }}><Edit size={18} /></button>
                                                     <button onClick={() => handleDeleteCampaign(cmp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                                                 </td>
                                             </tr>
@@ -940,7 +983,7 @@ function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
             <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '90vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
-                        {newCampaign.is_auto_apply ? 'Yeni Genel Kampanya' : 'Yeni Kupon Kodu'}
+                        {newCampaign.id ? 'Kampanyayı Düzenle' : (newCampaign.is_auto_apply ? 'Yeni Genel Kampanya' : 'Yeni Kupon Kodu')}
                     </h3>
                     <button onClick={onClose}><X /></button>
                 </div>
@@ -1039,7 +1082,7 @@ function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
                     </div>
 
                     <button type="submit" className="btn btn-primary">
-                        {newCampaign.is_auto_apply ? 'Kampanyayı Başlat' : 'Kuponu Oluştur'}
+                        {newCampaign.id ? 'Güncelle' : (newCampaign.is_auto_apply ? 'Kampanyayı Başlat' : 'Kuponu Oluştur')}
                     </button>
                 </form>
             </div>
