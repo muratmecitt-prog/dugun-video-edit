@@ -165,35 +165,41 @@ export default function AdminDashboard() {
 
                 // Fallback for missing email
                 if (!recipientEmail || recipientEmail === 'Yok' || recipientEmail === 'Bilinmiyor') {
-                    const manualEmail = prompt("⚠️ UYARI: Bu müşterinin sistemde kayıtlı emaili bulunamadı.\n\nLütfen bildirimin gitmesi için müşterinin email adresini giriniz (Bu işlem profili de güncelleyecektir):");
+                    const manualEmail = prompt("⚠️ UYARI: Bu müşterinin sistemde kayıtlı emaili bulunamadı.\n\nLütfen bildirimin gitmesi için müşterinin email adresini giriniz:");
 
                     if (manualEmail && manualEmail.includes('@')) {
                         recipientEmail = manualEmail;
 
-                        // Try to update the missing profile in background
+                        // Update local state IMMEDIATELY so we don't ask again this session
+                        setOrders(current => current.map(o => o.user_id === order.user_id ? { ...o, email: manualEmail } : o));
+
+                        // Try to update the missing profile in background (Best effort)
                         supabase.from('profiles').upsert({
                             id: order.user_id,
                             email: manualEmail,
                             updated_at: new Date().toISOString()
                         }).then(({ error }) => {
-                            if (!error) {
-                                showToast('Müşteri profili otomatik oluşturuldu/güncellendi.', 'success');
-                                // Refresh local state to show email next time
-                                setOrders(current => current.map(o => o.user_id === order.user_id ? { ...o, email: manualEmail } : o));
-                            }
+                            if (error) console.log('Profil güncelleme başarısız (RLS olabilir), ama devam ediliyor:', error);
                         });
                     }
                 }
 
                 if (recipientEmail && recipientEmail !== 'Yok') {
-                    sendNotificationEmail(templates.USER_STATUS_UPDATE, {
+                    showToast('📧 Email gönderiliyor...', 'info');
+                    const emailResult = await sendNotificationEmail(templates.USER_STATUS_UPDATE, {
                         to_email: recipientEmail,
                         order_id: orderId,
                         status: updates.status,
                         download_link: updates.download_link || order.download_link || ''
                     });
+
+                    if (emailResult.success) {
+                        alert(`✅ Başarılı!\nEmail şu adrese gönderildi: ${recipientEmail}`);
+                    } else {
+                        alert(`❌ Email Gönderilemedi!\nHata: ${JSON.stringify(emailResult.error)}`);
+                    }
                 } else {
-                    showToast('Email adresi olmadığı için bildirim gönderilemedi.', 'warning');
+                    alert('⚠️ Email adresi girilmediği için bildirim gönderilemedi.');
                 }
             }
 
