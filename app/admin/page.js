@@ -595,30 +595,30 @@ export default function AdminDashboard() {
                 {
                     id: 1,
                     type: 'card',
-                    title: '1. Dosyalarını Yükle',
-                    desc: 'Ham görüntülerinizi WeTransfer veya Google Drive üzerinden bize gönderin.',
-                    img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1600'
+                    title: '1. Videolarınızı Yükle',
+                    desc: 'Ham görüntülerinizi WeTransfer veya Google Drive ile kolayca bize gönderin.',
+                    img: '/step1_v2.png'
                 },
                 {
                     id: 2,
                     type: 'card',
                     title: '2. Profesyonel Kurgu',
                     desc: 'Uzman ekibimiz görüntülerinizi sinematik filme dönüştürsün.',
-                    img: 'https://images.unsplash.com/photo-1574717432741-9346d6d43329?auto=format&fit=crop&q=80&w=1600'
+                    img: '/step2.png'
                 },
                 {
                     id: 3,
                     type: 'card',
-                    title: '3. Revize & Onay',
-                    desc: 'Taslağı izleyin, beğenmediğiniz yerleri panelden saniye saniye not edin.',
-                    img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1600'
+                    title: '3. Revize Edin',
+                    desc: 'Hazırlanan taslağı izleyin, panel üzerinden anlık geri bildirim verin.',
+                    img: '/step3.png'
                 },
                 {
                     id: 4,
                     type: 'card',
-                    title: '4. Teslimat',
-                    desc: 'Final filminizi 4K kalitesinde indirin ve sosyal medyada paylaşın.',
-                    img: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=1600'
+                    title: '4. Teslim Alın',
+                    desc: 'Kusursuz hale gelen videonuzu 4K kalitesinde indirin ve çiftlerinize teslim edin.',
+                    img: '/step4_v2.png'
                 }
             ]
         };
