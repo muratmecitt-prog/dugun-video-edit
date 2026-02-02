@@ -422,7 +422,7 @@ function NewOrderForm() {
                                                 type="button"
                                                 onClick={() => {
                                                     setFormData(prev => ({ ...prev, package: pkgStr }));
-                                                    setAppliedCampaign(null); // Reset discount on package change
+                                                    // Do not reset campaign on package change
                                                 }}
                                                 style={{
                                                     padding: '20px',
