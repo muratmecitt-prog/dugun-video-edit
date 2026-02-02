@@ -36,6 +36,7 @@ function NewOrderForm() {
     // Discount States
     const [discountCode, setDiscountCode] = useState('');
     const [appliedCampaign, setAppliedCampaign] = useState(null);
+    const [autoCampaign, setAutoCampaign] = useState(null); // Store global campaign to fallback
     const [discountError, setDiscountError] = useState(null);
 
     // Fetch Packages
@@ -62,7 +63,9 @@ function NewOrderForm() {
                 .order('created_at', { ascending: false });
 
             if (campaignsData && campaignsData.length > 0) {
-                setAppliedCampaign(campaignsData[0]);
+                const auto = campaignsData[0];
+                setAutoCampaign(auto);
+                setAppliedCampaign(auto);
             }
 
             setLoadingPackages(false);
@@ -444,9 +447,10 @@ function NewOrderForm() {
                         {/* Discount Code Section */}
                         <div style={{ padding: '20px', backgroundColor: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
 
-                            {appliedCampaign && appliedCampaign.is_auto_apply ? (
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                            {/* Auto Campaign Banner (Always visible if active and no manual override) */}
+                            {appliedCampaign && appliedCampaign.is_auto_apply && (
+                                <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px dashed var(--border)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ backgroundColor: '#eab308', padding: '8px', borderRadius: '50%' }}>
                                             <Tag size={20} color="black" />
                                         </div>
@@ -455,57 +459,80 @@ function NewOrderForm() {
                                             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Size özel indirim otomatik olarak tanımlanmıştır.</p>
                                         </div>
                                     </div>
-
-                                    <div style={{ marginTop: '15px', color: '#4ade80', fontSize: '0.9rem', fontWeight: 'bold', padding: '10px', border: '1px dashed #4ade80', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                                        <span>İndirim Tutarı:</span>
-                                        <span style={{ fontSize: '1.1rem' }}>-{discountAmount} TL</span>
+                                    <div style={{ marginTop: '10px' }}>
+                                        <span style={{ color: '#4ade80', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                            İndirim Tutarı: -{discountAmount} TL
+                                        </span>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setAppliedCampaign(null)}
-                                        style={{ marginTop: '15px', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
-                                    >
-                                        Farklı bir indirim kodu kullanmak istiyorum
-                                    </button>
                                 </div>
-                            ) : (
-                                <>
-                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Tag size={16} /> İndirim Kodu
-                                    </label>
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <input
-                                            type="text"
-                                            value={discountCode}
-                                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                                            placeholder="Kodunuz var mı?"
-                                            className="form-input"
-                                            style={{ flex: 1 }}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleApplyDiscount}
-                                            className="btn btn-outline"
-                                            disabled={!discountCode || appliedCampaign}
-                                        >
-                                            {appliedCampaign ? 'Uygulandı' : 'Uygula'}
-                                        </button>
-                                    </div>
-
-                                    {discountError && (
-                                        <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>{discountError}</p>
-                                    )}
-
-                                    {appliedCampaign && (
-                                        <div style={{ marginTop: '15px', color: '#4ade80', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                                            ✅ "{appliedCampaign.code}" uygulandı! <br />
-                                            <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', marginRight: '10px' }}>{basePrice} TL</span>
-                                            <span style={{ fontSize: '1.2rem' }}>{finalPrice} TL</span>
-                                        </div>
-                                    )}
-                                </>
                             )}
+
+                            {/* Coupon Input Area */}
+                            <div>
+                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                    <Tag size={16} /> İndirim / Kupon Kodu
+                                </label>
+
+                                {appliedCampaign && !appliedCampaign.is_auto_apply ? (
+                                    /* Manual Coupon Active State */
+                                    <div style={{ padding: '15px', backgroundColor: 'rgba(74, 222, 128, 0.1)', borderRadius: '8px', border: '1px solid #4ade80' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <div style={{ fontWeight: 'bold', color: '#15803d', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    ✅ "{appliedCampaign.code}" Mevcut
+                                                </div>
+                                                <div style={{ fontSize: '0.85rem', color: '#166534', marginTop: '4px' }}>
+                                                    Bu kupon tanımlı kampanyadan daha avantajlı olabilir.
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setAppliedCampaign(autoCampaign || null); // Revert to auto or null
+                                                    setDiscountCode('');
+                                                }}
+                                                style={{ color: '#ef4444', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
+                                            >
+                                                Kaldır
+                                            </button>
+                                        </div>
+                                        <div style={{ marginTop: '10px', fontWeight: 'bold', fontSize: '1.1rem', color: '#15803d' }}>
+                                            -{discountAmount} TL İndirim
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Input Field State */
+                                    <div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input
+                                                type="text"
+                                                value={discountCode}
+                                                onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                                                placeholder={appliedCampaign?.is_auto_apply ? "Farklı bir kod kullan..." : "Kupon kodu giriniz"}
+                                                className="form-input"
+                                                style={{ flex: 1 }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyDiscount}
+                                                className="btn btn-outline"
+                                                disabled={!discountCode}
+                                            >
+                                                Uygula
+                                            </button>
+                                        </div>
+                                        {appliedCampaign?.is_auto_apply && (
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                                                * Kupon kodu girerseniz otomatik kampanya yerine kupon indirimi geçerli olur.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {discountError && (
+                                    <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>{discountError}</p>
+                                )}
+                            </div>
                         </div>
 
 

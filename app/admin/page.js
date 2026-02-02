@@ -737,56 +737,107 @@ export default function AdminDashboard() {
                 <div>
                     <div style={{ backgroundColor: 'var(--surface)', padding: '20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <h3 style={{ fontWeight: 'bold' }}>Kampanyalar</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Aktif indirim kodlarını yönet.</p>
+                            <h3 style={{ fontWeight: 'bold' }}>Kampanya ve Kupon Yönetimi</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Site genelindeki indirimleri ve özel kupon kodlarını buradan yönetebilirsiniz.</p>
                         </div>
-                        <button onClick={() => setIsCampaignModalOpen(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Plus size={20} /> Yeni Kampanya</button>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={() => { setNewCampaign({ ...newCampaign, is_auto_apply: true, code: 'OTOMATIK_' + Date.now().toString().slice(-4), badge_text: 'FIRSAT' }); setIsCampaignModalOpen(true); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#eab308', color: 'black', border: 'none' }}><Gift size={20} /> Yeni Genel Kampanya</button>
+                            <button onClick={() => { setNewCampaign({ ...newCampaign, is_auto_apply: false, code: '', badge_text: '' }); setIsCampaignModalOpen(true); }} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Tag size={20} /> Yeni Kupon Kodu</button>
+                        </div>
                     </div>
 
-                    <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                    <th style={{ padding: '16px' }}>Kampanya Adı</th>
-                                    <th style={{ padding: '16px' }}>Kod / Rozet</th>
-                                    <th style={{ padding: '16px' }}>İndirim</th>
-                                    <th style={{ padding: '16px' }}>Tip</th>
-                                    <th style={{ padding: '16px' }}>Kullanım</th>
-                                    <th style={{ padding: '16px' }}>Durum</th>
-                                    <th style={{ padding: '16px' }}>İşlem</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {campaigns.map(cmp => (
-                                    <tr key={cmp.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-                                        <td style={{ padding: '16px', fontWeight: 'bold' }}>{cmp.name}</td>
-                                        <td style={{ padding: '16px' }}>
-                                            <code style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', padding: '4px 8px', borderRadius: '4px' }}>{cmp.code}</code>
-                                            {cmp.badge_text && <div style={{ fontSize: '0.75rem', marginTop: '4px', color: '#eab308' }}>🏷 {cmp.badge_text}</div>}
-                                        </td>
-                                        <td style={{ padding: '16px' }}>{cmp.discount_type === 'PERCENTAGE' ? `%${cmp.discount_value}` : `${cmp.discount_value} TL`}</td>
-                                        <td style={{ padding: '16px' }}>
-                                            {cmp.is_auto_apply ? <span className="badge" style={{ backgroundColor: '#dbeafe', color: '#1e40af' }}>Otomatik</span> : 'Kupon'}
-                                        </td>
-                                        <td style={{ padding: '16px' }}>{cmp.used_count} / {cmp.usage_limit || '∞'}</td>
-                                        <td style={{ padding: '16px' }}>
-                                            <button
-                                                onClick={() => handleToggleCampaign(cmp.id, cmp.is_active)}
-                                                style={{
-                                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', border: 'none',
-                                                    backgroundColor: cmp.is_active ? '#dcfce7' : '#f3f4f6', color: cmp.is_active ? '#166534' : '#6b7280'
-                                                }}
-                                            >
-                                                {cmp.is_active ? 'Aktif' : 'Pasif'}
-                                            </button>
-                                        </td>
-                                        <td style={{ padding: '16px' }}>
-                                            <button onClick={() => handleDeleteCampaign(cmp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div style={{ display: 'grid', gap: '40px' }}>
+                        {/* SECTION 1: AUTO CAMPAIGNS */}
+                        <div>
+                            <h4 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#eab308', display: 'inline-block' }}></span>
+                                Genel Kampanyalar (Sitede Görünür)
+                            </h4>
+                            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                            <th style={{ padding: '16px' }}>Kampanya Başlığı</th>
+                                            <th style={{ padding: '16px' }}>Rozet</th>
+                                            <th style={{ padding: '16px' }}>İndirim</th>
+                                            <th style={{ padding: '16px' }}>Tarih Aralığı</th>
+                                            <th style={{ padding: '16px' }}>Durum</th>
+                                            <th style={{ padding: '16px' }}>İşlem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {campaigns.filter(c => c.is_auto_apply).map(cmp => (
+                                            <tr key={cmp.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                <td style={{ padding: '16px', fontWeight: 'bold' }}>{cmp.name}</td>
+                                                <td style={{ padding: '16px' }}>
+                                                    {cmp.badge_text ? <span style={{ backgroundColor: '#fef08a', color: '#854d0e', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 'bold' }}>{cmp.badge_text}</span> : '-'}
+                                                </td>
+                                                <td style={{ padding: '16px' }}>{cmp.discount_type === 'PERCENTAGE' ? `%${cmp.discount_value}` : `${cmp.discount_value} TL`}</td>
+                                                <td style={{ padding: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    {cmp.start_date ? new Date(cmp.start_date).toLocaleDateString() : 'Hemen'} - {cmp.end_date ? new Date(cmp.end_date).toLocaleDateString() : 'Süresiz'}
+                                                </td>
+                                                <td style={{ padding: '16px' }}>
+                                                    <button onClick={() => handleToggleCampaign(cmp.id, cmp.is_active)} style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', border: 'none', backgroundColor: cmp.is_active ? '#dcfce7' : '#f3f4f6', color: cmp.is_active ? '#166534' : '#6b7280' }}>
+                                                        {cmp.is_active ? 'Aktif' : 'Pasif'}
+                                                    </button>
+                                                </td>
+                                                <td style={{ padding: '16px' }}>
+                                                    <button onClick={() => handleDeleteCampaign(cmp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {campaigns.filter(c => c.is_auto_apply).length === 0 && (
+                                            <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Aktif genel kampanya yok.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* SECTION 2: COUPONS */}
+                        <div>
+                            <h4 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Tag size={20} />
+                                İndirim Kuponları (Kişiye Özel / Gizli)
+                            </h4>
+                            <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                                            <th style={{ padding: '16px' }}>Kupon Kodu</th>
+                                            <th style={{ padding: '16px' }}>Açıklama</th>
+                                            <th style={{ padding: '16px' }}>İndirim</th>
+                                            <th style={{ padding: '16px' }}>Kullanım</th>
+                                            <th style={{ padding: '16px' }}>Durum</th>
+                                            <th style={{ padding: '16px' }}>İşlem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {campaigns.filter(c => !c.is_auto_apply).map(cmp => (
+                                            <tr key={cmp.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                                <td style={{ padding: '16px' }}>
+                                                    <code style={{ backgroundColor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', padding: '6px 10px', borderRadius: '4px', fontWeight: 'bold' }}>{cmp.code}</code>
+                                                </td>
+                                                <td style={{ padding: '16px' }}>{cmp.name}</td>
+                                                <td style={{ padding: '16px' }}>{cmp.discount_type === 'PERCENTAGE' ? `%${cmp.discount_value}` : `${cmp.discount_value} TL`}</td>
+                                                <td style={{ padding: '16px' }}>{cmp.used_count} / {cmp.usage_limit || '∞'}</td>
+                                                <td style={{ padding: '16px' }}>
+                                                    <button onClick={() => handleToggleCampaign(cmp.id, cmp.is_active)} style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold', cursor: 'pointer', border: 'none', backgroundColor: cmp.is_active ? '#dcfce7' : '#f3f4f6', color: cmp.is_active ? '#166534' : '#6b7280' }}>
+                                                        {cmp.is_active ? 'Aktif' : 'Pasif'}
+                                                    </button>
+                                                </td>
+                                                <td style={{ padding: '16px' }}>
+                                                    <button onClick={() => handleDeleteCampaign(cmp.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {campaigns.filter(c => !c.is_auto_apply).length === 0 && (
+                                            <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Kupon bulunamadı.</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -888,70 +939,81 @@ function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
             <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '90vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Yeni Kampanya</h3>
+                    <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                        {newCampaign.is_auto_apply ? 'Yeni Genel Kampanya' : 'Yeni Kupon Kodu'}
+                    </h3>
                     <button onClick={onClose}><X /></button>
                 </div>
                 <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <div style={{ padding: '10px', backgroundColor: 'var(--background)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                            <input
-                                type="checkbox"
-                                checked={newCampaign.is_auto_apply}
-                                onChange={e => setNewCampaign({ ...newCampaign, is_auto_apply: e.target.checked })}
-                                id="isAutoApply"
-                                style={{ width: '20px', height: '20px' }}
-                            />
-                            <label htmlFor="isAutoApply" style={{ fontWeight: 'bold', fontSize: '1rem' }}>Otomatik Uygula (Auto-Apply)</label>
-                        </div>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            Seçilirse, müşteriler kod girmeden bu indirimi otomatik kazanır. Site genelinde fiyatlar çizili gösterilir.
-                        </p>
-                    </div>
 
+                    {newCampaign.is_auto_apply ? (
+                        /* AUTO CAMPAIGN FIELDS */
+                        <>
+                            <div style={{ padding: '10px', backgroundColor: '#fef9c3', borderRadius: '8px', border: '1px solid #fde047', color: '#854d0e' }}>
+                                <p style={{ fontSize: '0.9rem' }}>
+                                    📢 <strong>Dikkat:</strong> Bu kampanya oluşturulduğu anda sitedeki tüm paketlerin fiyatını otomatik olarak düşürecek.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="form-label">Kampanya Başlığı (Örn: Yaz Fırsatı)</label>
+                                <input className="form-input" value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} required />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <div>
+                                    <label className="form-label">İndirim Miktarı</label>
+                                    <div style={{ display: 'flex', gap: '5px' }}>
+                                        <input className="form-input" type="number" value={newCampaign.discount_value} onChange={e => setNewCampaign({ ...newCampaign, discount_value: e.target.value })} placeholder="500" required />
+                                        <select className="form-input" style={{ width: '80px' }} value={newCampaign.discount_type} onChange={e => setNewCampaign({ ...newCampaign, discount_type: e.target.value })}>
+                                            <option value="PERCENTAGE">%</option>
+                                            <option value="FIXED">TL</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="form-label">Rozet Metni (Örn: %20 İNDİRİM)</label>
+                                    <input className="form-input" value={newCampaign.badge_text} onChange={e => setNewCampaign({ ...newCampaign, badge_text: e.target.value })} />
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        /* COUPON FIELDS */
+                        <>
+                            <div style={{ padding: '10px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #dbeafe', color: '#1e40af' }}>
+                                <p style={{ fontSize: '0.9rem' }}>
+                                    🎫 <strong>Bilgi:</strong> Bu kod sadece ödeme sayfasında kodu giren müşterilere uygulanır.
+                                </p>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <div>
+                                    <label className="form-label">Kupon Kodu (Örn: OZEL20)</label>
+                                    <input className="form-input" value={newCampaign.code} onChange={e => setNewCampaign({ ...newCampaign, code: e.target.value.toUpperCase() })} required />
+                                </div>
+                                <div>
+                                    <label className="form-label">Açıklama (Opsiyonel)</label>
+                                    <input className="form-input" value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} placeholder="Örn: Ahmet Bey'e Özel" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="form-label">İndirim Miktarı</label>
+                                <div style={{ display: 'flex', gap: '5px' }}>
+                                    <input className="form-input" type="number" value={newCampaign.discount_value} onChange={e => setNewCampaign({ ...newCampaign, discount_value: e.target.value })} placeholder="20" required />
+                                    <select className="form-input" style={{ width: '80px' }} value={newCampaign.discount_type} onChange={e => setNewCampaign({ ...newCampaign, discount_type: e.target.value })}>
+                                        <option value="PERCENTAGE">%</option>
+                                        <option value="FIXED">TL</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* COMMON DATE FIELDS */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                         <div>
-                            <label className="form-label">Kampanya Adı (Admin)</label>
-                            <input className="form-input" value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} placeholder="Örn: Yaz İndirimi" required />
-                        </div>
-                        <div>
-                            <label className="form-label">İndirim Kodu</label>
-                            <input className="form-input" value={newCampaign.code} onChange={e => setNewCampaign({ ...newCampaign, code: e.target.value.toUpperCase() })} placeholder="Örn: YAZ20" required />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                        <div>
-                            <label className="form-label">İndirim Tipi</label>
-                            <select className="form-input" value={newCampaign.discount_type} onChange={e => setNewCampaign({ ...newCampaign, discount_type: e.target.value })}>
-                                <option value="PERCENTAGE">Yüzde (%)</option>
-                                <option value="FIXED">Sabit Tutar (TL)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="form-label">Değer</label>
-                            <input className="form-input" type="number" value={newCampaign.discount_value} onChange={e => setNewCampaign({ ...newCampaign, discount_value: e.target.value })} placeholder="20 veya 500" required />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                        <div>
-                            <label className="form-label">Rozet Metni (Opsiyonel)</label>
-                            <input className="form-input" value={newCampaign.badge_text} onChange={e => setNewCampaign({ ...newCampaign, badge_text: e.target.value })} placeholder="Örn: %20 İNDİRİM" />
-                        </div>
-                        <div>
-                            <label className="form-label">Min. Sipariş (Opsiyonel)</label>
-                            <input className="form-input" type="number" value={newCampaign.min_order_count} onChange={e => setNewCampaign({ ...newCampaign, min_order_count: e.target.value })} placeholder="0" />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                        <div>
-                            <label className="form-label">Başlangıç Tarihi</label>
+                            <label className="form-label">Başlangıç</label>
                             <input className="form-input" type="datetime-local" value={newCampaign.start_date || ''} onChange={e => setNewCampaign({ ...newCampaign, start_date: e.target.value })} />
-                            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Boş bırakılırsa hemen başlar.</p>
                         </div>
                         <div>
-                            <label className="form-label">Bitiş Tarihi</label>
+                            <label className="form-label">Bitiş</label>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 <input
                                     className="form-input"
@@ -975,12 +1037,10 @@ function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <label className="form-label">Kullanım Limiti (Opsiyonel)</label>
-                        <input className="form-input" type="number" value={newCampaign.usage_limit} onChange={e => setNewCampaign({ ...newCampaign, usage_limit: e.target.value })} placeholder="Sınırsız" />
-                    </div>
 
-                    <button type="submit" className="btn btn-primary">Oluştur</button>
+                    <button type="submit" className="btn btn-primary">
+                        {newCampaign.is_auto_apply ? 'Kampanyayı Başlat' : 'Kuponu Oluştur'}
+                    </button>
                 </form>
             </div>
             <style jsx>{`
