@@ -948,10 +948,31 @@ function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
                         <div>
                             <label className="form-label">Başlangıç Tarihi</label>
                             <input className="form-input" type="datetime-local" value={newCampaign.start_date || ''} onChange={e => setNewCampaign({ ...newCampaign, start_date: e.target.value })} />
+                            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Boş bırakılırsa hemen başlar.</p>
                         </div>
                         <div>
                             <label className="form-label">Bitiş Tarihi</label>
-                            <input className="form-input" type="datetime-local" value={newCampaign.end_date || ''} onChange={e => setNewCampaign({ ...newCampaign, end_date: e.target.value })} />
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <input
+                                    className="form-input"
+                                    type="datetime-local"
+                                    value={newCampaign.end_date || ''}
+                                    onChange={e => setNewCampaign({ ...newCampaign, end_date: e.target.value })}
+                                    disabled={newCampaign.is_indefinite}
+                                />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={newCampaign.is_indefinite || !newCampaign.end_date}
+                                        onChange={e => {
+                                            const checked = e.target.checked;
+                                            setNewCampaign({ ...newCampaign, is_indefinite: checked, end_date: checked ? '' : newCampaign.end_date });
+                                        }}
+                                        style={{ width: '16px', height: '16px' }}
+                                    />
+                                    <span style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>Süresiz</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div>
