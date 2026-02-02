@@ -31,6 +31,12 @@ export default function AdminDashboard() {
         is_auto_apply: false, badge_text: '', start_date: '', end_date: ''
     });
 
+    // FAQ States
+    const [faqs, setFaqs] = useState([]);
+    const [editingFaq, setEditingFaq] = useState(null);
+    const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+    const [newFaq, setNewFaq] = useState({ question: '', answer: '', display_order: 0, is_active: true });
+
     // Form States
     const [newTitle, setNewTitle] = useState('');
     const [newVideoUrl, setNewVideoUrl] = useState('');
@@ -130,6 +136,13 @@ export default function AdminDashboard() {
                 .order('created_at', { ascending: false });
             if (campaignsError) throw campaignsError;
 
+            // Fetch FAQs
+            const { data: faqsData, error: faqsError } = await supabase
+                .from('faqs')
+                .select('*')
+                .order('display_order', { ascending: true });
+            if (faqsError) throw faqsError;
+
             // Enrich orders with profile data
             const enrichedOrders = ordersData.map(order => {
                 const profile = profilesData?.find(p => p.id === order.user_id);
@@ -146,6 +159,7 @@ export default function AdminDashboard() {
             setPortfolio(portfolioData || []);
             setPackages(packagesData || []);
             setCampaigns(campaignsData || []);
+            setFaqs(faqsData || []);
         } catch (err) {
             console.error('Error fetching admin data:', err.message);
             setError(err.message);
@@ -414,6 +428,66 @@ export default function AdminDashboard() {
         }
     };
 
+    // FAQ Handlers
+    const handleAddFaq = async (e) => {
+        e.preventDefault();
+        try {
+            if (editingFaq) {
+                // Update
+                const { error } = await supabase
+                    .from('faqs')
+                    .update({
+                        question: newFaq.question,
+                        answer: newFaq.answer,
+                        display_order: newFaq.display_order,
+                        is_active: newFaq.is_active
+                    })
+                    .eq('id', editingFaq.id);
+
+                if (error) throw error;
+                showToast('Soru güncellendi.', 'success');
+            } else {
+                // Insert
+                const { error } = await supabase
+                    .from('faqs')
+                    .insert([newFaq]);
+
+                if (error) throw error;
+                showToast('Soru eklendi.', 'success');
+            }
+
+            setIsFaqModalOpen(false);
+            setEditingFaq(null);
+            setNewFaq({ question: '', answer: '', display_order: 0, is_active: true });
+            fetchData();
+        } catch (err) {
+            showToast('İşlem hatası: ' + err.message, 'error');
+        }
+    };
+
+    const handleDeleteFaq = async (id) => {
+        if (!confirm('Bu soruyu silmek istediğinize emin misiniz?')) return;
+        try {
+            const { error } = await supabase.from('faqs').delete().eq('id', id);
+            if (error) throw error;
+            showToast('Soru silindi.', 'success');
+            fetchData();
+        } catch (err) {
+            showToast('Silme hatası: ' + err.message, 'error');
+        }
+    };
+
+    const openEditFaqModal = (faq) => {
+        setEditingFaq(faq);
+        setNewFaq({
+            question: faq.question,
+            answer: faq.answer,
+            display_order: faq.display_order,
+            is_active: faq.is_active
+        });
+        setIsFaqModalOpen(true);
+    };
+
     // Filters
     const orderCounts = {
         'Hepsi': orders.length,
@@ -543,6 +617,21 @@ export default function AdminDashboard() {
                     }}
                 >
                     <Gift size={20} /> Kampanyalar
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('S.S.S.')}
+                    style={{
+                        padding: '10px 20px',
+                        borderBottom: activeMainTab === 'S.S.S.' ? '2px solid var(--primary)' : '2px solid transparent',
+                        color: activeMainTab === 'S.S.S.' ? 'var(--primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        background: 'none',
+                        borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                        cursor: 'pointer', fontSize: '1.1rem',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <MessageSquare size={20} /> S.S.S.
                 </button>
             </div>
 
@@ -906,6 +995,113 @@ export default function AdminDashboard() {
             {enlargedImage && (
                 <div onClick={() => setEnlargedImage(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <img src={enlargedImage} style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+                </div>
+            )}
+
+            {/* CONTENT: FAQs */}
+            {activeMainTab === 'S.S.S.' && (
+                <div style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', padding: '25px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Sıkça Sorulan Sorular</h2>
+                        <button
+                            onClick={() => {
+                                setEditingFaq(null);
+                                setNewFaq({ question: '', answer: '', display_order: faqs.length + 1, is_active: true });
+                                setIsFaqModalOpen(true);
+                            }}
+                            className="btn btn-primary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <Plus size={18} /> Yeni Soru Ekle
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {faqs.map(faq => (
+                            <div key={faq.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', backgroundColor: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                                <div style={{ flex: 1, marginRight: '20px' }}>
+                                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span style={{ backgroundColor: 'var(--surface)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            #{faq.display_order}
+                                        </span>
+                                        {faq.question}
+                                        {!faq.is_active && <span style={{ fontSize: '0.8rem', color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Pasif</span>}
+                                    </div>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                                        {faq.answer}
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={() => openEditFaqModal(faq)}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--surface)', cursor: 'pointer', color: 'var(--text-main)' }}
+                                    >
+                                        <Edit size={16} /> Düzenle
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteFaq(faq.id)}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', border: '1px solid #ef4444', borderRadius: '6px', background: 'rgba(239,68,68,0.1)', cursor: 'pointer', color: '#ef4444' }}
+                                    >
+                                        <Trash2 size={16} /> Sil
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {faqs.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                                Henüz hiç soru eklenmemiş.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Modals */}
+            {isCampaignModalOpen && (
+                <NewCampaignModal
+                    newCampaign={newCampaign}
+                    setNewCampaign={setNewCampaign}
+                    onClose={() => setIsCampaignModalOpen(false)}
+                    onSave={handleCreateCampaign}
+                />
+            )}
+
+            {isFaqModalOpen && (
+                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+                    <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{editingFaq ? 'Soruyu Düzenle' : 'Yeni Soru Ekle'}</h3>
+                            <button onClick={() => setIsFaqModalOpen(false)}><X /></button>
+                        </div>
+                        <form onSubmit={handleAddFaq} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <div>
+                                <label className="form-label">Soru</label>
+                                <input className="form-input" value={newFaq.question} onChange={e => setNewFaq({ ...newFaq, question: e.target.value })} required />
+                            </div>
+                            <div>
+                                <label className="form-label">Cevap</label>
+                                <textarea className="form-input" rows="4" value={newFaq.answer} onChange={e => setNewFaq({ ...newFaq, answer: e.target.value })} required />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <div>
+                                    <label className="form-label">Sıralama</label>
+                                    <input className="form-input" type="number" value={newFaq.display_order} onChange={e => setNewFaq({ ...newFaq, display_order: parseInt(e.target.value) })} />
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '25px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={newFaq.is_active}
+                                        onChange={e => setNewFaq({ ...newFaq, is_active: e.target.checked })}
+                                        id="faqActive"
+                                        style={{ width: '20px', height: '20px' }}
+                                    />
+                                    <label htmlFor="faqActive">Yayında</label>
+                                </div>
+                            </div>
+                            <button type="submit" className="btn btn-primary">{editingFaq ? 'Güncelle' : 'Ekle'}</button>
+                        </form>
+                    </div>
                 </div>
             )}
 

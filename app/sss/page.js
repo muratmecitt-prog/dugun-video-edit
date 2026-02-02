@@ -1,6 +1,33 @@
-import { ChevronDown } from 'lucide-react';
+"use client";
+import { useState, useEffect } from 'react';
+import { ChevronDown, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export default function FAQPage() {
+    const [faqs, setFaqs] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchFaqs = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('faqs')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('display_order', { ascending: true });
+
+                if (error) throw error;
+                setFaqs(data || []);
+            } catch (err) {
+                console.error('Error fetching FAQs:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchFaqs();
+    }, []);
+
     return (
         <div className="container section">
             <div style={{ textAlign: 'center', marginBottom: '60px' }}>
@@ -11,37 +38,21 @@ export default function FAQPage() {
             </div>
 
             <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-                <AccordianItem
-                    question="Kaç revize hakkım var?"
-                    answer="Her siparişiniz için 1 tur kapsamlı revize hakkınız bulunmaktadır. Bu turda tüm notlarınızı iletmeniz durumunda gerekli düzenlemeler yapılır."
-                />
-
-                <AccordianItem
-                    question="Müzik seçimini kim yapıyor?"
-                    answer="Video kurgusunun en önemli parçası olan müzik seçimini, videonun ruhuna ve ritmine uygun olarak profesyonel editörlerimiz yapar. Telifsiz veya lisanslı stok müzik kütüphanelerimizden en uygun parça seçilir."
-                />
-
-                <AccordianItem
-                    question="Çekim formatım standartlara uymuyorsa ne olur?"
-                    answer="Yine de işleme alabiliriz. Ancak 1080p altı çözünürlüklerde veya 25fps çekimlerde (slow-motion yapılamayacağı için) kurgu dili değişebilir. En iyi sonuç için 'Çekim Standartları' sayfamızı incelemenizi öneririz."
-                />
-
-                <AccordianItem
-                    question="Dosyaları nasıl gönderiyorum?"
-                    answer="Görüntülerinizi WeTransfer, Google Drive, Dropbox gibi bulut servislerine yükleyip linki sipariş oluşturma formuna yapıştırmanız yeterlidir."
-                />
-
-                <AccordianItem
-                    question="Teslim süresi uzar mı?"
-                    answer="Mücbir sebepler (sağlık, teknik arıza vb.) olmadığı sürece paketlerde belirtilen süreler (7-21 gün) içerisinde teslimat yapılır."
-                />
-
-                <AccordianItem
-                    question="Aynı anda birden fazla sipariş verebilir miyim?"
-                    answer="Evet, paneliniz üzerinden dilediğiniz kadar sipariş oluşturabilirsiniz. Her biri ayrı proje olarak takip edilecektir."
-                />
-
+                {loading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                        <Loader2 className="animate-spin" size={32} />
+                    </div>
+                ) : (
+                    <>
+                        {faqs.map(faq => (
+                            <AccordianItem
+                                key={faq.id}
+                                question={faq.question}
+                                answer={faq.answer}
+                            />
+                        ))}
+                    </>
+                )}
             </div>
         </div>
     );
