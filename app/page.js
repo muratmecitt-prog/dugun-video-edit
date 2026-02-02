@@ -115,35 +115,34 @@ export default function Home() {
     img: '/fcp-interface.png'
   };
 
-  // Ensure scenes exist
-  let activeScenes = siteSettings?.scenes || [];
+  // Ensure settings & scenes exist
+  const activeScenesList = siteSettings?.scenes || [];
 
-  // Safety: If FCP card is missing (legacy data), inject it at the start
-  if (!activeScenes.find(s => s.id === 'fcp')) {
-    activeScenes = [defaultFCP, ...activeScenes];
-  }
+  // Extract FCP card (or use default)
+  const fcpCard = activeScenesList.find(s => s.id === 'fcp') || defaultFCP;
 
+  // Extract Steps (everything else)
+  const stepScenes = activeScenesList.filter(s => s.id !== 'fcp');
+
+  // Construct final payload with explicit FCP positioning
   scenesPayload = [
     { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
-    ...activeScenes.map((s, i) => {
-      let start, end;
-      if (i === 0) {
-        // First card (FCP) - Immediately overlaps
-        start = 0;
-        end = SCENE_HEIGHT * 2;
-      } else {
-        // Subsequent cards - Staggered
-        start = SCENE_HEIGHT * (0.5 + i);
-        end = SCENE_HEIGHT * (2 + i);
-      }
 
-      return {
-        ...s,
-        type: 'card',
-        startScroll: start,
-        endScroll: end
-      };
-    })
+    // 1. FCP Card (Explicitly First)
+    {
+      ...fcpCard,
+      type: 'card',
+      startScroll: 0, // Starts immediately
+      endScroll: SCENE_HEIGHT * 2
+    },
+
+    // 2. Step Cards
+    ...stepScenes.map((s, i) => ({
+      ...s,
+      type: 'card',
+      startScroll: SCENE_HEIGHT * (1.5 + i), // Starts at 1.5H (overlapping FCP by 0.5H)
+      endScroll: SCENE_HEIGHT * (3 + i)
+    }))
   ];
   if (!siteSettings?.scenes?.length) { // This condition means no dynamic scenes were loaded from DB
     // Fallback to hardcoded
