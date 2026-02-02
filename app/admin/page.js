@@ -194,12 +194,12 @@ export default function AdminDashboard() {
                     });
 
                     if (emailResult.success) {
-                        alert(`✅ Başarılı!\nEmail şu adrese gönderildi: ${recipientEmail}`);
+                        showToast(`Email başarıyla gönderildi: ${recipientEmail}`, 'success');
                     } else {
                         alert(`❌ Email Gönderilemedi!\nHata: ${JSON.stringify(emailResult.error)}`);
                     }
                 } else {
-                    alert('⚠️ Email adresi girilmediği için bildirim gönderilemedi.');
+                    showToast('Email adresi olmadığı için bildirim gönderilemedi.', 'warning');
                 }
             }
 
