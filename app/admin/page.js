@@ -593,6 +593,14 @@ export default function AdminDashboard() {
             blurAmount: 5,
             scenes: [
                 {
+                    id: 'fcp',
+                    type: 'card',
+                    title: 'İşinizi Büyütmeye Odaklanın',
+                    desc: "Siz çekin, biz kurgulayalım. Türkiye'nin profesyonelleri için \nhızlı, standart ve kaliteli video edit hizmeti.",
+                    btnText: 'Hemen Başlayın',
+                    img: '/fcp-interface.png'
+                },
+                {
                     id: 1,
                     type: 'card',
                     title: '1. Videolarınızı Yükle',
