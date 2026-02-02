@@ -120,9 +120,9 @@ function NewOrderForm() {
 
             if (pkgIdFromUrl) {
                 // Prioritize ID
-                const p = packages.find(pkg => pkg.id === pkgIdFromUrl);
+                const p = packages.find(pkg => String(pkg.id) === String(pkgIdFromUrl));
                 if (p) {
-                    const defaultStr = `PAKET ${p.display_order} — ${p.name} (${p.price} TL)`;
+                    const defaultStr = `PAKET ${p.display_order} — ${p.name} (${p.price.toLocaleString('tr-TR')} TL)`;
                     setFormData(prev => ({ ...prev, package: defaultStr }));
                 }
             } else if (pkgNameFromUrl) {
@@ -131,7 +131,7 @@ function NewOrderForm() {
             } else if (!formData.package) {
                 // Default to first one
                 const p = packages[0];
-                const defaultStr = `PAKET ${p.display_order} — ${p.name} (${p.price} TL)`;
+                const defaultStr = `PAKET ${p.display_order} — ${p.name} (${p.price.toLocaleString('tr-TR')} TL)`;
                 setFormData(prev => ({ ...prev, package: defaultStr }));
             }
         }
