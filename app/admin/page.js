@@ -1073,41 +1073,13 @@ export default function AdminDashboard() {
             )}
 
             {isFaqModalOpen && (
-                <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-                    <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                            <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{editingFaq ? 'Soruyu Düzenle' : 'Yeni Soru Ekle'}</h3>
-                            <button onClick={() => setIsFaqModalOpen(false)}><X /></button>
-                        </div>
-                        <form onSubmit={handleAddFaq} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            <div>
-                                <label className="form-label">Soru</label>
-                                <input className="form-input" value={newFaq.question} onChange={e => setNewFaq({ ...newFaq, question: e.target.value })} required />
-                            </div>
-                            <div>
-                                <label className="form-label">Cevap</label>
-                                <textarea className="form-input" rows="4" value={newFaq.answer} onChange={e => setNewFaq({ ...newFaq, answer: e.target.value })} required />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div>
-                                    <label className="form-label">Sıralama</label>
-                                    <input className="form-input" type="number" value={newFaq.display_order} onChange={e => setNewFaq({ ...newFaq, display_order: parseInt(e.target.value) })} />
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '25px' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={newFaq.is_active}
-                                        onChange={e => setNewFaq({ ...newFaq, is_active: e.target.checked })}
-                                        id="faqActive"
-                                        style={{ width: '20px', height: '20px' }}
-                                    />
-                                    <label htmlFor="faqActive">Yayında</label>
-                                </div>
-                            </div>
-                            <button type="submit" className="btn btn-primary">{editingFaq ? 'Güncelle' : 'Ekle'}</button>
-                        </form>
-                    </div>
-                </div>
+                <EditFaqModal
+                    faq={editingFaq}
+                    newFaq={newFaq}
+                    setNewFaq={setNewFaq}
+                    onClose={() => setIsFaqModalOpen(false)}
+                    onSave={handleAddFaq}
+                />
             )}
 
             <style jsx>{`
@@ -1290,6 +1262,83 @@ function NewCampaignModal({ newCampaign, setNewCampaign, onClose, onSave }) {
             <style jsx>{`
                 .form-label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 500; }
                 .form-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--background); color: var(--text-main); }
+            `}</style>
+        </div>
+    );
+}
+
+// ... existing modal components ...
+
+function EditFaqModal({ faq, newFaq, setNewFaq, onClose, onSave }) {
+    return (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+            <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{faq ? 'Soruyu Düzenle' : 'Yeni Soru Ekle'}</h3>
+                    <button onClick={onClose}><X /></button>
+                </div>
+                <form onSubmit={onSave} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div>
+                        <label className="form-label">Soru</label>
+                        <input
+                            className="form-input"
+                            value={newFaq.question}
+                            onChange={e => setNewFaq({ ...newFaq, question: e.target.value })}
+                            required
+                            placeholder="Örn: Kargo ücreti var mı?"
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label">Cevap</label>
+                        <textarea
+                            className="form-input"
+                            rows="4"
+                            value={newFaq.answer}
+                            onChange={e => setNewFaq({ ...newFaq, answer: e.target.value })}
+                            required
+                            placeholder="Örn: Hayır, tüm siparişlerde kargo ücretsizdir."
+                        />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div>
+                            <label className="form-label">Sıralama</label>
+                            <input
+                                className="form-input"
+                                type="number"
+                                value={newFaq.display_order}
+                                onChange={e => setNewFaq({ ...newFaq, display_order: parseInt(e.target.value) })}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '25px' }}>
+                            <input
+                                type="checkbox"
+                                checked={newFaq.is_active}
+                                onChange={e => setNewFaq({ ...newFaq, is_active: e.target.checked })}
+                                id="faqActive"
+                                style={{ width: '20px', height: '20px' }}
+                            />
+                            <label htmlFor="faqActive">Yayında</label>
+                        </div>
+                    </div>
+                    <button type="submit" className="btn btn-primary">{faq ? 'Güncelle' : 'Ekle'}</button>
+                </form>
+            </div>
+            <style jsx>{`
+                .form-label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 500; }
+                .form-input { 
+                    width: 100%; 
+                    padding: 12px; 
+                    border-radius: 8px; 
+                    border: 1px solid var(--border); 
+                    background: var(--background); 
+                    color: var(--text-main);
+                    font-size: 0.95rem;
+                }
+                .form-input:focus {
+                    outline: none;
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+                }
             `}</style>
         </div>
     );
