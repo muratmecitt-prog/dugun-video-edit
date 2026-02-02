@@ -53,8 +53,7 @@ export default function AdminDashboard() {
             // Fetch profiles
             const { data: profilesData, error: profilesError } = await supabase
                 .from('profiles')
-                .select('*')
-                .order('created_at', { ascending: false });
+                .select('*');
 
             if (profilesError) throw profilesError;
 
@@ -378,7 +377,7 @@ export default function AdminDashboard() {
                                         <div style={{ fontSize: '0.9rem' }}>{profile.email}</div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{profile.phone}</div>
                                     </td>
-                                    <td style={{ padding: '16px' }}>{new Date(profile.created_at).toLocaleDateString()}</td>
+                                    <td style={{ padding: '16px' }}>{profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}</td>
                                     <td style={{ padding: '16px' }}>
                                         <span className="badge">{orders.filter(o => o.user_id === profile.id).length} Adet</span>
                                     </td>
