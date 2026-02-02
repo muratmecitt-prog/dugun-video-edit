@@ -180,22 +180,7 @@ export default function Home() {
   // Simplify: If DB settings exist, use uniform stacking. 
   // If not, use the "legacy" hardcoded stack which had custom offsets (1.5, etc).
   // The DB version will be cleaner: Card N is at N*H to (N+1)*H.
-  if (siteSettings?.scenes?.length > 0) {
-    scenesPayload = [
-      { id: 'hero', type: 'intro', startScroll: 0, endScroll: SCENE_HEIGHT },
-      ...siteSettings.scenes.map((s, i) => ({
-        ...s,
-        type: 'card',
-        startScroll: SCENE_HEIGHT * (0 + i), // First card starts emerging immediately/overlapping hero?
-        // Original FCP card started at 0.
-        // Let's try to replicate the "flow".
-        // Hero keeps user busy till SCENE_HEIGHT.
-        // First card should appear around SCENE_HEIGHT.
-        startScroll: SCENE_HEIGHT * (0.5 + i), // Slight overlap
-        endScroll: SCENE_HEIGHT * (2 + i)
-      }))
-    ];
-  }
+  // Duplicate block removed to respect the explicit FCP logic above.
 
   const scenes = scenesPayload;
 
