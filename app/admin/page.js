@@ -163,31 +163,51 @@ export default function AdminDashboard() {
                 const order = orders.find(o => o.id === orderId);
                 let recipientEmail = order.email;
 
-                // Fallback for missing email
+                // 1. Check LocalStorage Cache for previously entered emails (Prevents repetitive prompting)
                 if (!recipientEmail || recipientEmail === 'Yok' || recipientEmail === 'Bilinmiyor') {
-                    const manualEmail = prompt("⚠️ UYARI: Bu müşterinin sistemde kayıtlı emaili bulunamadı.\n\nLütfen bildirimin gitmesi için müşterinin email adresini giriniz:");
+                    const cachedEmails = JSON.parse(localStorage.getItem('admin_email_cache') || '{}');
+                    if (cachedEmails[order.user_id]) {
+                        recipientEmail = cachedEmails[order.user_id];
+                    }
+                }
+
+                // 2. Fallback: Prompt user if still missing
+                if (!recipientEmail || recipientEmail === 'Yok' || recipientEmail === 'Bilinmiyor') {
+                    const manualEmail = prompt("⚠️ UYARI: Bu müşterinin emaili veritabanında bulunamadı.\n\nLütfen email adresini giriniz (Tarayıcıya kaydedilecektir):");
 
                     if (manualEmail && manualEmail.includes('@')) {
                         recipientEmail = manualEmail;
 
-                        // Update local state IMMEDIATELY so we don't ask again this session
+                        // Update Local State
                         setOrders(current => current.map(o => o.user_id === order.user_id ? { ...o, email: manualEmail } : o));
 
-                        // Try to update the missing profile in background (Best effort)
+                        // Save to LocalStorage (Persistent Cache)
+                        const cachedEmails = JSON.parse(localStorage.getItem('admin_email_cache') || '{}');
+                        cachedEmails[order.user_id] = manualEmail;
+                        localStorage.setItem('admin_email_cache', JSON.stringify(cachedEmails));
+
+                        // Try DB Update (Best Effort - might fail due to RLS)
                         supabase.from('profiles').upsert({
                             id: order.user_id,
                             email: manualEmail,
                             updated_at: new Date().toISOString()
                         }).then(({ error }) => {
-                            if (error) console.log('Profil güncelleme başarısız (RLS olabilir), ama devam ediliyor:', error);
+                            if (error) console.warn('DB Profile Update Failed (Likely RLS), using local cache instead.');
                         });
                     }
                 }
 
                 if (recipientEmail && recipientEmail !== 'Yok') {
                     showToast('📧 Email gönderiliyor...', 'info');
+
+                    // 3. Send with Multiple Variable Names (Shotgun Approach)
+                    // This ensures compatibility regardless of what {{variable}} is used in EmailJS template
                     const emailResult = await sendNotificationEmail(templates.USER_STATUS_UPDATE, {
-                        to_email: recipientEmail,
+                        to_email: recipientEmail,     // Standard
+                        email: recipientEmail,        // Common
+                        user_email: recipientEmail,   // Common
+                        recipient: recipientEmail,    // Common
+                        reply_to: recipientEmail,     // Common
                         order_id: orderId,
                         status: updates.status,
                         download_link: updates.download_link || order.download_link || ''
@@ -199,7 +219,7 @@ export default function AdminDashboard() {
                         alert(`❌ Email Gönderilemedi!\nHata: ${JSON.stringify(emailResult.error)}`);
                     }
                 } else {
-                    showToast('Email adresi olmadığı için bildirim gönderilemedi.', 'warning');
+                    showToast('Email adresi girilmedi, bildirim iptal edildi.', 'warning');
                 }
             }
 
