@@ -2,9 +2,9 @@ import { Copy, CreditCard } from 'lucide-react';
 
 export default function BankDetails() {
     const bankInfo = {
-        bankName: "Garanti BBVA",
+        bankName: "Enpara Bankası",
         accountName: "Düğün Video Edit Ltd. Şti.",
-        iban: "TR56 0006 2000 0001 2345 6789 01"
+        iban: "TR04 0015 7000 0000 0077 8096 63"
     };
 
     const copyToClipboard = (text) => {
