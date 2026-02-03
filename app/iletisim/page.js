@@ -1,19 +1,28 @@
 "use client";
 import { useState } from 'react';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import { sendNotificationEmail, templates } from '@/lib/emailService';
 
 export default function ContactPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate form submission
-        setTimeout(() => {
-            alert('Mesajınız başarıyla gönderildi! En kısa sürede dönüş yapacağız.');
-            setIsSubmitting(false);
-            e.target.reset();
-        }, 1500);
+
+        const formData = new FormData(e.target);
+
+        await sendNotificationEmail(templates.CONTACT_FORM, {
+            full_name: formData.get('full_name'),
+            email: formData.get('email'),
+            subject: formData.get('subject'),
+            message: formData.get('message'),
+            to_email: 'dugunvideoedit@gmail.com' // Passing intent, though template config decides final delivery
+        });
+
+        alert('Mesajınız başarıyla gönderildi! En kısa sürede dönüş yapacağız.');
+        setIsSubmitting(false);
+        e.target.reset();
     };
 
     return (
@@ -52,17 +61,29 @@ export default function ContactPage() {
 
                         <div>
                             <label className="form-label">Adınız Soyadınız</label>
-                            <input required type="text" placeholder="Ad Soyad" className="form-input" />
+                            <input
+                                required
+                                type="text"
+                                placeholder="Ad Soyad"
+                                className="form-input"
+                                name="full_name"
+                            />
                         </div>
 
                         <div>
                             <label className="form-label">E-posta Adresiniz</label>
-                            <input required type="email" placeholder="ornek@email.com" className="form-input" />
+                            <input
+                                required
+                                type="email"
+                                placeholder="ornek@email.com"
+                                className="form-input"
+                                name="email"
+                            />
                         </div>
 
                         <div>
                             <label className="form-label">Konu</label>
-                            <select className="form-input">
+                            <select className="form-input" name="subject">
                                 <option>Genel Bilgi</option>
                                 <option>Sipariş / Paketler Hakkında</option>
                                 <option>Teknik Destek</option>
@@ -72,7 +93,13 @@ export default function ContactPage() {
 
                         <div>
                             <label className="form-label">Mesajınız</label>
-                            <textarea required rows="5" placeholder="Mesajınızı buraya yazabilirsiniz..." className="form-input" />
+                            <textarea
+                                required
+                                rows="5"
+                                placeholder="Mesajınızı buraya yazabilirsiniz..."
+                                className="form-input"
+                                name="message"
+                            />
                         </div>
 
                         <button type="submit" disabled={isSubmitting} className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
