@@ -274,12 +274,9 @@ export default function Home() {
                     group: 'hover'
                   }}
                   className="portfolio-card"
-                >            <img
-                    src={`https://img.youtube.com/vi/${item.video_url.includes('v=') ? item.video_url.split('v=')[1].split('&')[0] : ''}/hqdefault.jpg`}
-                    alt={item.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, transition: 'opacity 0.3s' }}
-                    onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
-                  />
+                >
+                  <VideoThumbnail videoUrl={item.video_url} alt={item.title} />
+
                   <div className="play-overlay" style={{
                     position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'center',
