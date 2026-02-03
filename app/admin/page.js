@@ -641,7 +641,56 @@ export default function AdminDashboard() {
     return (
         <div className="container section">
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <style jsx>{`
+                .admin-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 30px;
+                }
+                .admin-tabs {
+                    display: flex;
+                    gap: 20px;
+                    margin-bottom: 20px;
+                    border-bottom: 1px solid var(--border);
+                    overflow-x: auto;
+                    white-space: nowrap;
+                    padding-bottom: 10px;
+                    scrollbar-width: thin;
+                }
+                .admin-tabs::-webkit-scrollbar {
+                    height: 4px;
+                    background-color: transparent;
+                }
+                .admin-tabs::-webkit-scrollbar-thumb {
+                    background-color: var(--primary);
+                    border-radius: 4px;
+                }
+                .sub-tabs {
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 25px;
+                    overflow-x: auto;
+                    padding-bottom: 5px;
+                }
+                
+                @media (max-width: 768px) {
+                    .admin-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 15px;
+                    }
+                    .admin-header > div:last-child {
+                        width: 100%;
+                        justify-content: space-between;
+                        display: flex;
+                        align-items: center;
+                    }
+                }
+            `}</style>
+
+            {/* Header */}
+            <div className="admin-header">
                 <div>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Admin Paneli</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>Yönetim Paneli</p>
@@ -656,7 +705,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Main Tabs */}
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', borderBottom: '1px solid var(--border)' }}>
+            <div className="admin-tabs">
                 <button
                     onClick={() => setActiveMainTab('Siparişler')}
                     style={{
@@ -782,7 +831,7 @@ export default function AdminDashboard() {
 
             {/* Sub Tabs (Only for Orders) */}
             {activeMainTab === 'Siparişler' && (
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', overflowX: 'auto', paddingBottom: '5px' }}>
+                <div className="sub-tabs">
                     {Object.keys(orderCounts).map(tab => (
                         <button
                             key={tab}

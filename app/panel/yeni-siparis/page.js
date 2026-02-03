@@ -370,7 +370,7 @@ function NewOrderForm() {
 
             <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '40px' }}>Yeni Sipariş Oluştur</h1>
 
-            <div style={{ gap: '40px', display: 'grid', gridTemplateColumns: 'minmax(0, 700px) minmax(0, 1fr)', alignItems: 'start' }}>
+            <div className="layout-grid">
 
                 {/* Form Column */}
                 <div style={{ backgroundColor: 'var(--surface)', padding: '40px', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
@@ -430,7 +430,7 @@ function NewOrderForm() {
                             </div>
                         )}
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                        <div className="input-grid">
                             <div>
                                 <label className="form-label">Gelin & Damat İsimleri</label>
                                 <input
@@ -459,7 +459,7 @@ function NewOrderForm() {
                         <div>
                             <label className="form-label" style={{ marginBottom: '15px' }}>Paket Seçimi</label>
                             {loadingPackages ? <p>Paketler yükleniyor...</p> : (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <div className="package-grid">
                                     {packages.map((pkg) => {
                                         const pkgStr = `PAKET ${pkg.display_order} — ${pkg.name} (${pkg.price.toLocaleString('tr-TR')} TL)`;
                                         const isSelected = formData.package === pkgStr;
@@ -745,6 +745,41 @@ function NewOrderForm() {
         .form-input:focus {
           outline: 2px solid var(--primary);
           border-color: transparent;
+        }
+
+        /* Responsive Grids */
+        .layout-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 700px) minmax(0, 1fr);
+            gap: 40px;
+            align-items: start;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .package-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+            .package-grid {
+                grid-template-columns: 1fr;
+            }
         }
       `}</style>
         </div>

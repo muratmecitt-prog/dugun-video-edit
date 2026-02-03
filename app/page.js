@@ -301,8 +301,8 @@ export default function Home() {
         </section>
       )}
 
-      {/* Unified 3D Scroll Reveal Stack with Packages Fade In */}
-      <section style={{ height: `${SCENE_HEIGHT * (scenes.length + 1)}px`, position: 'relative', backgroundColor: '#000' }}>
+      {/* Unified 3D Scroll Reveal Stack (Desktop Only) */}
+      <section className="desktop-3d-container" style={{ height: `${SCENE_HEIGHT * (scenes.length + 1)}px`, position: 'relative', backgroundColor: '#000' }}>
         <div className="sticky-wrapper" style={{
           position: 'sticky',
           top: 0,
@@ -402,6 +402,34 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Mobile Scroll Section (Visible only on < 768px) */}
+      <section className="mobile-scroll-container">
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '20px', color: 'white' }}>Nasıl Çalışır?</h2>
+          <p style={{ color: '#aaa' }}>Profesyonel iş akışımız ile tanışın.</p>
+        </div>
+
+        {/* Mobile Info Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginBottom: '60px' }}>
+          <div style={{ padding: '20px', background: '#111', borderRadius: '12px', border: '1px solid #222', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <Clock size={24} color="#facc15" />
+            <div><strong style={{ color: 'white' }}>Hızlı Teslim</strong><br /><span style={{ fontSize: '0.85rem', color: '#888' }}>7-21 gün garanti</span></div>
+          </div>
+          <div style={{ padding: '20px', background: '#111', borderRadius: '12px', border: '1px solid #222', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <Tag size={24} color="#facc15" />
+            <div><strong style={{ color: 'white' }}>Sabit Fiyat</strong><br /><span style={{ fontSize: '0.85rem', color: '#888' }}>Sürpriz yok</span></div>
+          </div>
+        </div>
+
+        {scenes.map(scene => (
+          <MobileScene key={scene.id} scene={scene} />
+        ))}
+
+        <div style={{ marginTop: '60px' }}>
+          <PackagesSection showTitle={true} />
+        </div>
+      </section>
+
       {/* Video Modal */}
       {selectedVideo && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }} onClick={() => setSelectedVideo(null)}>
@@ -440,12 +468,62 @@ export default function Home() {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
         }
-        .glass-card:hover {
-            transform: translateY(-5px);
-            background-color: rgba(255,255,255,0.1) !important;
+        
+        /* Mobile/Desktop Visibility Toggles */
+        .desktop-3d-container {
+            display: block;
+        }
+        .mobile-scroll-container {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-3d-container {
+                display: none !important;
+            }
+            .mobile-scroll-container {
+                display: block !important;
+                background-color: #000;
+                padding: 40px 20px;
+            }
         }
       `}</style>
     </>
+  );
+}
+
+// Mobile Version of the Scene Card (Static, Vertical)
+function MobileScene({ scene }) {
+  if (scene.type === 'intro') return null; // Skip empty hero spacer
+
+  return (
+    <div style={{
+      marginBottom: '60px',
+      backgroundColor: '#0f0f0f',
+      borderRadius: '20px',
+      overflow: 'hidden',
+      border: '1px solid #333',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+    }}>
+      <img
+        src={scene.img}
+        alt={scene.title}
+        style={{ width: '100%', height: '250px', objectFit: 'cover' }}
+      />
+      <div style={{ padding: '24px', textAlign: 'center' }}>
+        <h3 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'white', marginBottom: '12px' }}>
+          {scene.title}
+        </h3>
+        <p style={{ fontSize: '1rem', color: '#ccc', lineHeight: '1.5', marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
+          {scene.desc}
+        </p>
+        {scene.btnText && (
+          <Link href="/paketler" className="btn btn-primary" style={{ width: '100%', display: 'block', padding: '12px' }}>
+            {scene.btnText}
+          </Link>
+        )}
+      </div>
+    </div>
   );
 }
 
