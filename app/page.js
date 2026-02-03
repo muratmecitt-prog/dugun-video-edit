@@ -656,3 +656,42 @@ function ThreeDCard({ img, title, desc, btnText, scrollY, startScroll, endScroll
     </div>
   );
 }
+
+function VideoThumbnail({ videoUrl, alt }) {
+  const [thumbnail, setThumbnail] = useState(null);
+
+  useEffect(() => {
+    if (!videoUrl) return;
+
+    // YouTube
+    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+      const videoId = videoUrl.includes('v=')
+        ? videoUrl.split('v=')[1].split('&')[0]
+        : videoUrl.split('/').pop();
+      setThumbnail(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+    }
+    // Vimeo
+    else if (videoUrl.includes('vimeo.com')) {
+      const videoId = videoUrl.match(/vimeo\.com\/(\d+)/)?.[1];
+      if (videoId) {
+        fetch(`https://vimeo.com/api/v2/video/${videoId}.json`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data[0]) {
+              setThumbnail(data[0].thumbnail_large);
+            }
+          })
+          .catch(err => console.error("Vimeo thumb error:", err));
+      }
+    }
+  }, [videoUrl]);
+
+  return (
+    <img
+      src={thumbnail || '/placeholder-video.jpg'}
+      alt={alt}
+      style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, transition: 'opacity 0.3s' }}
+      onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/400x300?text=Video'; }}
+    />
+  );
+}
