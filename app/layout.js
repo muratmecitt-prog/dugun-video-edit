@@ -25,6 +25,12 @@ export const metadata = {
     siteName: 'Düğün Video Edit',
     locale: 'tr_TR',
     type: 'website',
+    images: [{
+      url: '/icon.png',
+      width: 800,
+      height: 600,
+      alt: 'Düğün Video Edit Logo',
+    }],
   },
   twitter: {
     card: 'summary_large_image',
